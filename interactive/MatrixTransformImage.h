@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ofMain.h"
-#include "AlphaStackItem.h"
-#include "MatrixTransformObject.h"
+#include "ofxAlphaStackItem.h"
+#include "ofxMatrixTransformObject.h"
 
 
-class MatrixTransformImage : public AlphaStackItem , public MatrixTransformObject
+class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransformObject
 {
 	public :
         bool bInheritAlpha ;

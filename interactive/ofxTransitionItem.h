@@ -1,18 +1,14 @@
 #pragma once
 
-#include "ofVec2f.h"
 #include "ofMain.h"
-#include "Tweenzor.h"
-#include "AlphaStackItem.h"
 
-class TransitionItem : public AlphaStackItem
+class ofxTransitionItem
 {
 	public :
 		TransitionItem() {
 		    bInTransition = false ;
 		} ;
 
-		ofVec2f offset ;
 		virtual void transitionIn( ofVec2f _offset , float time = 0.5f , float delay = 0.0f ) {  }
 		virtual void transitionOut( ofVec2f _offset , float time = 0.5f , float delay = 0.0f ) {  }
 
@@ -21,9 +17,9 @@ class TransitionItem : public AlphaStackItem
             if ( bInTransition ) return ;
 
             bInTransition = true ;
-
-            Tweenzor::add( &alpha , alpha , 1.0f , delay , time , EASE_OUT_QUAD ) ;
-            Tweenzor::addCompleteListener( Tweenzor::getTween( &alpha ) , this , &TransitionItem::transitionInComplete ) ;
+            
+            //Tweenzor::add( &alpha , alpha , 1.0f , delay , time , EASE_OUT_QUAD ) ;
+            //Tweenzor::addCompleteListener( Tweenzor::getTween( &alpha ) , this , &TransitionItem::transitionInComplete ) ;
         }
 
         void transitionOut( float time , float delay )
@@ -32,8 +28,8 @@ class TransitionItem : public AlphaStackItem
 
             bInTransition = true ;
 
-            Tweenzor::add( &alpha , alpha , 0.0f , delay , time , EASE_OUT_QUAD ) ;
-            Tweenzor::addCompleteListener( Tweenzor::getTween( &alpha ) , this , &TransitionItem::transitionOutComplete ) ;
+            //Tweenzor::add( &alpha , alpha , 0.0f , delay , time , EASE_OUT_QUAD ) ;
+            //Tweenzor::addCompleteListener( Tweenzor::getTween( &alpha ) , this , &TransitionItem::transitionOutComplete ) ;
 
         }
 
