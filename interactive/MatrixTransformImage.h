@@ -17,12 +17,13 @@ class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransfor
 			//alpha = 0 ;
 		}
 
-		void loadImage( string path , float _x , float _y , ofPoint anchor )
+		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f )
 		{
 		    image.loadImage( path ) ;
 		    x = _x ;
 		    y = _y ;
 		    image.setAnchorPercent( anchor.x , anchor.y ) ;
+            alpha = _alpha ; 
 		}
 
 		ofImage image ;
@@ -35,4 +36,13 @@ class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransfor
 				image.draw ( 0 , 0 ) ;
 			matrixPop( ) ;
 		}
+    
+        void resizePorportionally ( float _width , float _height )
+        {
+            if ( image.bAllocated() )
+            {
+                
+            }
+            
+        }
 };
