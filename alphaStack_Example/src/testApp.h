@@ -1,12 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
-#include "HeliosDebug.h"
-#include "Interactive.h"
-#include "ContentTypes.h"
 #include "myAlphaStackItem.h"
 
-class testApp : public ofBaseApp{
+class testApp : public ofBaseApp
+{
 
 	public:
 		void setup();

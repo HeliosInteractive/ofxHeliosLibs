@@ -2,41 +2,21 @@
 #define MYALPHASTACKCHILD_H
 
 #include "ofMain.h"
-#include "AlphaStackItem.h"
+#include "ofxAlphaStackItem.h"
 
-class myAlphaStackChild : public AlphaStackItem
+class myAlphaStackChild : public ofxAlphaStackItem
 {
     public:
         myAlphaStackChild() { }
 
-        float x , y ;
+       
+        void setup ( float _x , float _y ) ; 
+        void draw( ) ; 
+        void update( ) ; 
 
-        void alphaStackUpdate ( float stackAlpha )
-        {
-            calcAlpha = alpha * stackAlpha ;
-        }
-
-        void setup ( )
-        {
-            color = ofColor ( ofRandom ( 255 ) , ofRandom ( 255 ) , ofRandom ( 255 ) ) ;
-            calcAlpha = 1.0f ;
-            alpha = 1.0f ;
-        }
-
-        void draw( )
-        {
-            ofSetColor( color.r , color.g , color.b , calcAlpha * 255.0f ) ;
-            ofRect ( x , y  , 20 , 20 ) ;
-        }
-
-        void update( )
-        {
-
-        }
-
+		float x , y ;
         ofColor color ;
-        float alpha ;
-        float calcAlpha ;
+
     protected:
     private:
 };

@@ -11,9 +11,7 @@ void testApp::setup(){
     for ( int i = 0 ; i < 12 ; i++ )
     {
         myAlphaStackItem item ;
-        item.setup( ) ;
-        item.x = ofRandom ( 100 , ofGetWidth() - 100 ) ;
-        item.y = ofRandom ( 100 , ofGetHeight() - 100 ) ;
+        item.setup( ofRandom ( 100 , ofGetWidth() - 100 ) , ofRandom ( 100 , ofGetHeight() - 100 ) , 3 ) ;
         alphaStack.push_back ( item ) ;
     }
 }
@@ -25,6 +23,7 @@ void testApp::update(){
     {
         float stackVisibility = sin ( ofGetElapsedTimef() * (( float) i / 5.0f )) * .5 + 0.5 ;
         alphaStack[i].alphaStackUpdate( stackVisibility ) ;
+		alphaStack[i].update(); 
     }
 }
 
