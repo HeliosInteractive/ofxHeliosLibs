@@ -9,13 +9,6 @@ void ofxMatrixTransformObject::setup ( )
     x = 0 ;
     y = 0 ;
 }
-
-float rotation ;	// z rotation
-float scale ;		// uniform scale
-float x , y ;		// catersian points
-
-ofRectangle hitBounds ;
-
 void ofxMatrixTransformObject::matrixPush( )
 {
     //translate -> rotate -> scale
@@ -41,6 +34,7 @@ ofRectangle ofxMatrixTransformObject::getHitBounds ( )
     return hitBounds ;
 }
 
+/* does not work on rotated objects... YET! */
 bool ofxMatrixTransformObject::hitTest( ofVec2f p , ofRectangle _bounds )
 {
     return (( p.x > _bounds.x ) && ( p.x < _bounds.x + _bounds.width) && ( p.y > _bounds.y ) && ( p.y  < _bounds.y + _bounds.height ));

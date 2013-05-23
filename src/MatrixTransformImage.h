@@ -4,7 +4,6 @@
 #include "ofxAlphaStackItem.h"
 #include "ofxMatrixTransformObject.h"
 
-
 class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransformObject
 {
 	public :
@@ -16,16 +15,34 @@ class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransfor
 			bInheritAlpha = false ;
 			//alpha = 0 ;
 		}
+    
+        ~MatrixTransformImage ( )
+        {
+            image.clear() ; 
+        }
 
 		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f )
 		{
 		    image.loadImage( path ) ;
 		    x = _x ;
 		    y = _y ;
-		    image.setAnchorPercent( anchor.x , anchor.y ) ;
-            alpha = _alpha ; 
+            _anchor = anchor ;
+//		    image.setAnchorPercent( anchor.x , anchor.y ) ;
+            alpha = _alpha ;
+            //cout << "loadImage : " << path << endl ;
 		}
+    
+        ofPoint _anchor ;
 
+        void setImageProeprties( float _x , float _y , ofPoint anchor , float _alpha = 0.0f )
+        {
+            x = _x ;
+            y = _y ;
+            _anchor = anchor ;
+            //image.setAnchorPercent( anchor.x , anchor.y ) ;
+            alpha = _alpha ;
+        }
+    
 		ofImage image ;
 
 		void draw ( )
@@ -33,7 +50,8 @@ class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransfor
 			matrixPush( ) ;
               //  if ( !bInheritAlpha )
                 ofSetColor ( 255 , 255 , 255 , getOFAlpha() ) ;
-				image.draw ( 0 , 0 ) ;
+                image.draw ( image.width * -_anchor.x , image.height * -_anchor.y ) ;
+               // image.draw ( image.width * _anchor.x , image.height * _anchor.y ) ;
 			matrixPop( ) ;
 		}
     
@@ -45,4 +63,5 @@ class MatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTransfor
             }
             
         }
+    
 };

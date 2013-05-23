@@ -2,10 +2,10 @@
 #include "MultiTouchActions.h"
 //--------------------------------------------------------------
 void testApp::setup(){
-    mouseDrag.setup ( 0 ) ;
-    mouseDragReflect.setup( 1 ) ;
+    mouseDrag.setup ( 0  , 0 , 0 ) ;
+    mouseDragReflect.setup( 1 , 0 , 0 ) ;
 
-    mtObject.setup( ofPoint( ofGetWidth()/2 , ofGetHeight()/2) , 400.0f , 0.9725f ) ;
+    mtObject.setup( ofGetWidth()/2 , ofGetHeight()/2 , 400.0f , 0.9725f ) ;
     ofSetFrameRate( 60 ) ;
 }
 
@@ -24,6 +24,8 @@ void testApp::draw(){
 
     mouseDrag.draw ( ) ;
     mouseDragReflect.draw( ) ;
+
+	ofDrawBitmapStringHighlight(  mtObject.getDebugOutput() , 15 , 15 ) ; 
 
 }
 
@@ -51,7 +53,7 @@ void testApp::mouseDragged(int x, int y, int button){
     mouseDragReflect.onDrag( ofPoint ( (ofGetWidth() - x)/w , (ofGetHeight() - y )/h));
 
     ofPoint m = ofPoint( x , y ) ;
-    ofPoint myObjP = ofPoint ( mtObject.position.x * w , mtObject.position.y * h ) ;
+    ofPoint myObjP = ofPoint ( mtObject.x * w , mtObject.y * h ) ;
     //OVERLY SIMPLE hit detection. We check how far our point is from the center ro see if we are hitting
     float dist = myObjP.distance( myObjP ) ;
     if ( dist < ( mtObject.area.width / 2 ) )
@@ -70,8 +72,9 @@ void testApp::mousePressed(int x, int y, int button){
     mouseDragReflect.onDown( ofPoint ( (ofGetWidth() - x)/w , (ofGetHeight() - y )/h));
 
     ofPoint m = ofPoint( x , y ) ;
-    ofPoint myObjP = ofPoint ( mtObject.position.x * w , mtObject.position.y * h ) ;
-    //OVERLY SIMPLE hit detection. We check how far our point is from the center ro see if we are hitting
+    ofPoint myObjP = ofPoint ( mtObject.x * w , mtObject.y * h ) ;
+
+    //OVERLY SIMPLE hit detection. We check how far our point is from the center To see if we are hitting
     float dist = myObjP.distance( myObjP ) ;
     if ( dist < ( mtObject.area.width / 2 ) )
     {

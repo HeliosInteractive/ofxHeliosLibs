@@ -18,7 +18,7 @@ class ofxMatrixTransformObject
     
         float rotation ;	// z rotation
         float scale ;		// uniform scale
-        float x , y ;		// catersian points
+        float x , y ;		// caRtesian points
     
         ofRectangle hitBounds ;
     
