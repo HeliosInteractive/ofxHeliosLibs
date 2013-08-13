@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\testApp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchActions.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchCursor.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchObject.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\ofxAlphaStackItem.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\ofxMatrixTransformObject.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\ofxTransitionItem.cpp">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons">
+      <UniqueIdentifier>{71834f65-f3a9-211e-73b8-dc8563776aec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs">
+      <UniqueIdentifier>{9242c2c7-5a8a-77bd-7e09-babe8a96bc35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs\src">
+      <UniqueIdentifier>{ea348405-da09-a5a6-2eae-c1f2b9611f4a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\testApp.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\Interactive.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\MatrixTransformImage.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchActions.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchCursor.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\MultiTouchObject.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\ofxAlphaStackItem.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\ofxMatrixTransformObject.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\ofxTransitionItem.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\SoundBank.h">
+      <Filter>addons\ofxHeliosLibs\src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
