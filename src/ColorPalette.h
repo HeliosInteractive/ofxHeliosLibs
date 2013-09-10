@@ -8,7 +8,10 @@ class ColorPalette
 {
 
     public:
-        ColorPalette( ) {}
+        ColorPalette( ) 
+		{
+			
+		}
 
         struct colorItem
         {
