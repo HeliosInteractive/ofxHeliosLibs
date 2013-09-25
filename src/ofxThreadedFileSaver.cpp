@@ -19,6 +19,8 @@ void ofxThreadedFileSaver::threadedFunction( )
 			ss << " bResult : " << bResult << " after saving to : " << saveToPath << endl ; 
 			unlock() ; 
 			stopThread( ) ; 
+
+			ofNotifyEvent( LoadingEvents::Instance()->FILE_LOADED , originalUrl ) ; 
 		}
 
 
@@ -27,12 +29,36 @@ void ofxThreadedFileSaver::threadedFunction( )
 	}
 }
 
-
-void ofxThreadedFileSaver::saveFileToPath ( string path , ofBuffer fileBufferData , bool _bIsBinary ) 
+void ofxThreadedFileSaver::update()
 {
+	timeoutTimer.update(); 
+}
+
+
+void ofxThreadedFileSaver::saveFileToPath ( string path , ofBuffer fileBufferData , bool _bIsBinary, string _originalUrl ) 
+{
+	attempts = 0 ; 
 	bufferData = fileBufferData ; 
 	saveToPath = path ; 
 	bIsBinary = _bIsBinary ; 
+	originalUrl = _originalUrl ; 
+	timeoutTimer.setup( 9000 ) ; 
+	timeoutTimer.start( false , true ) ; 
+	startThread( true , false ) ; 
+}
+
+void ofxThreadedFileSaver::retry() 
+{
+	attempts++ ; 
+	if ( attempts > 4 ) 
+	{
+		stringstream ss ; 
+		ss << saveToPath << " has failed to save to the computer 5 times..." << endl ; 
+		ofLogVerbose( ss.str() ) ; 
+	}
+
+	waitForThread( true ) ; 
+	timeoutTimer.start( false , true ) ; 
 	startThread( true , false ) ; 
 }
 

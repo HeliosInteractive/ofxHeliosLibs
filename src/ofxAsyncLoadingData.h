@@ -9,10 +9,9 @@ class ofxAsyncLoadingData
 		~ofxAsyncLoadingData() { } 
 
         void setup ( string _url , int _uniqueId, bool _bBinaryFile ) ; 
-		bool checkFileExtensionForBinaryFile( string filePath )  ; 
 
 		//Has this successfully Loaded ?
-        bool bLoaded ; 
+        bool bLoading ; 
 
 		//Has there been an attempt to load this ?
 		int numLoadAttempts ; 
@@ -27,6 +26,7 @@ class ofxAsyncLoadingData
 		bool bBinaryFile ;
 
 		unsigned long startLoadTime ; 
+		int totalLoadTime ; 
 		
 
     protected:

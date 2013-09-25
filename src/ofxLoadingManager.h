@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "ofxAsyncLoadingData.h"
 #include "ofxThreadedFileSaver.h"
+#include "LoadingEvents.h"
 
 #ifdef OSC_LOAD_NOTIFICATIONS
 #include "ofxOsc.h"
@@ -13,11 +14,12 @@ class ofxLoadingManager
 	public : 
 		ofxLoadingManager( ) {}
 
+		/*
 		static ofxLoadingManager* Instance()
         {
             static ofxLoadingManager inst ; 
             return &inst ; 
-        }
+        }*/
 
 		//Core OF Functions
 		void setup ( string localSavePath ) ; 
@@ -51,14 +53,25 @@ class ofxLoadingManager
 		ofxThreadedFileSaver saver7 ;
 		ofxThreadedFileSaver saver8 ;
 		ofxThreadedFileSaver saver9 ;
-		
+
+
 		int getNextEmptyFileSaverIndex() ; 
 		vector<ofxAsyncLoadingData> asyncLoadData ; 
+		vector<ofxAsyncLoadingData> cacheDataQueue ; 
+		vector<ofxAsyncLoadingData> writingData ; 
+		vector<ofxAsyncLoadingData> completedData ; 
 
 		int getAsyncDataIndexFromUrl( string url ) ; 
 
 		ofDirectory localDirectory ; 
 		string localDirectoryPath ; 
+
+		void removeAsyncDataFromQueue( ofxAsyncLoadingData data ) ; 
+		void loadCompleteHandler( string &args ) ; 
+
+		void timerCompleteHandler( int &args ) ; 
+
+		float totalLoadTime; 
 
 		
 };
