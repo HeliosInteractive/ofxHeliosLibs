@@ -38,6 +38,8 @@ private:
 	public:
 		int32_t _threadId;
 		int32_t _downloadId;
+		int32_t _triesLeft;
+		time_t _failureTime;
 		std::string _url;
 		std::string _infoPath;
 		std::string _dataPath;
@@ -91,6 +93,8 @@ private:
 	bool _initialized;
 	std::string _downloadDir;
 	int32_t _maxThreads;
+	int32_t _maxTries;
+	int32_t _retryDelay;
 	bool _resume;
 	bool _overwrite;
 	int32_t _connectTimeout;
@@ -104,9 +108,10 @@ private:
 	std::list<WorkerThread *> _buriedThreads;
 
 	DownloadInfo *claimPendingDownload(int32_t threadId);
-	bool releasePendingDownload(const DownloadInfo *info);
-	void queuePendingDownload(const DownloadInfo &info);
+	bool releasePendingDownload(const DownloadInfo *info, bool complete);
+	bool postponePendingDownload(const DownloadInfo *info);
 	bool completePendingDownload(const DownloadInfo *info);
+	void queuePendingDownload(const DownloadInfo &info);
 	void startWorkerThreadLocked();
 	void startWorkerThread();
 	bool removeWorkerThreadLocked(int32_t threadId);
@@ -117,9 +122,10 @@ private:
 
 public:
 	ofxDownloader(): _threadId(0), _downloadId(0), _startTime(time(0)), _initialized(false) {}
-	bool initialize(const std::string &downloadDir, int32_t maxThreads = 3, bool resume = true,
-		bool overwrite = false, int32_t connectTimeout = ConnectTimeout,
-		int32_t downloadTimeout = DownloadTimeout, DownloadCallback callback = 0, void *opaque = 0);
+	bool initialize(std::vector<int32_t> &ids, const std::string &downloadDir, int32_t maxThreads = 3,
+		int32_t maxTries = 3, int32_t retryDelay = 10, bool resume = true, bool overwrite = false,
+		int32_t connectTimeout = ConnectTimeout, int32_t downloadTimeout = DownloadTimeout,
+		DownloadCallback callback = 0, void *opaque = 0);
 	bool addDownload(int32_t &id, const std::string &url, const std::string &fileName = "",
 		int64_t length = -1, const std::string &md5Digest = "");
 	const char *statusToText(DownloadStatus status);
