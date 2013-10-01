@@ -302,7 +302,13 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				ofxLogErr("Download #" << _info->_downloadId << " from " << _info->_url <<
 					" failed on thread #" << _threadId);
 				_info->_failureTime = time(0);
-				_downloader->postponePendingDownload(_info);
+				_info->_triesLeft--;
+				ofxLogVer("Download #" << _info->_downloadId << " has " << _info->_triesLeft <<
+					" tr[y|ies] left");
+				if (_info->_triesLeft > 0)
+					_downloader->postponePendingDownload(_info);
+				else
+					_downloader->completePendingDownload(_info);
 			}
 			goto leave;
 		}
@@ -372,12 +378,12 @@ bool ofxDownloader::releasePendingDownload(const DownloadInfo *info, bool comple
 
 bool ofxDownloader::postponePendingDownload(const DownloadInfo *info) {
 	int32_t threadId = info->_threadId, downloadId = info->_downloadId;
-	ofxLogVer("Thread #" << threadId << " releasing download #" << downloadId);
+	ofxLogVer("Thread #" << threadId << " postponing download #" << downloadId);
 	if (releasePendingDownload(info, false)) {
-		ofxLogVer("Thread #" << threadId << " released download #" << downloadId);
+		ofxLogVer("Thread #" << threadId << " postponed download #" << downloadId);
 		return true;
 	}
-	ofxLogErr("AMAZING! Thread #" << threadId << " released non-existent download #" << downloadId);
+	ofxLogErr("AMAZING! Thread #" << threadId << " postponed non-existent download #" << downloadId);
 	return false;
 }
 
