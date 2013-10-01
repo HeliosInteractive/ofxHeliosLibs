@@ -92,6 +92,7 @@ private:
 	std::string _downloadDir;
 	int32_t _maxThreads;
 	bool _resume;
+	bool _overwrite;
 	int32_t _connectTimeout;
 	int32_t _downloadTimeout;
 	DownloadCallback _callback;
@@ -112,12 +113,13 @@ private:
 	void buryWorkerThreadLocked(WorkerThread *thread);
 	void workerThreadAscension();
 	void stopWorkerThreads();
+	bool validateFile(const std::string &filePath);
 
 public:
 	ofxDownloader(): _threadId(0), _downloadId(0), _startTime(time(0)), _initialized(false) {}
 	bool initialize(const std::string &downloadDir, int32_t maxThreads = 3, bool resume = true,
-		int32_t connectTimeout = ConnectTimeout, int32_t downloadTimeout = DownloadTimeout,
-		DownloadCallback callback = 0, void *opaque = 0);
+		bool overwrite = false, int32_t connectTimeout = ConnectTimeout,
+		int32_t downloadTimeout = DownloadTimeout, DownloadCallback callback = 0, void *opaque = 0);
 	bool addDownload(int32_t &id, const std::string &url, const std::string &fileName = "",
 		int64_t length = -1, const std::string &md5Digest = "");
 	const char *statusToText(DownloadStatus status);

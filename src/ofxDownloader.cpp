@@ -2,13 +2,13 @@
 
 static const std::string makeInfoFileName(const std::string &suffix) {
 	static const std::string PREFIX("!!!-");
-	static const std::string EXTENSION(".txt");
+	static const std::string EXTENSION(".dif");
 	return PREFIX + suffix + EXTENSION;
 }
 
 static const std::string makeDataFileName(const std::string &suffix) {
 	static const std::string PREFIX("!!!-");
-	static const std::string EXTENSION(".tmp");
+	static const std::string EXTENSION(".ddf");
 	return PREFIX + suffix + EXTENSION;
 }
 
@@ -264,9 +264,19 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 		case WorkerThreadStatePersist: {
 			ofxLogVer("Persisting download #" << _info->_downloadId << " to " << _info->_filePath);
 			dataFile.close();
+			if (_downloader->_overwrite) {
+				ofxLogVer("Overwriting existing file");
+				ofFile::removeFile(_info->_filePath, false);
+			}
 			if (!ofFile::moveFromTo(_info->_dataPath, _info->_filePath, false, true)) {
 				ofxLogErr("Error while renaming data file " << _info->_dataPath << " to " <<
 					_info->_filePath << " for download #" << _info->_downloadId);
+				_state = WorkerThreadStateError;
+				continue;
+			}
+			if (!ofFile::removeFile(_info->_infoPath, false)) {
+				ofxLogErr("Error while removing info file " << _info->_infoPath << " for download #" <<
+					_info->_downloadId);
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -450,8 +460,28 @@ void ofxDownloader::workerThreadAscension() {
 	_buriedThreads.clear();
 }
 
+bool ofxDownloader::validateFile(const std::string &filePath) {
+	ofxLogVer("Validating file " << filePath);
+	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
+		it != _pendingDownloads.end(); it++) {
+		if (it->_filePath == filePath) {
+			ofxLogErr("File " << filePath << " already covered by download #" << it->_downloadId);
+			return false;
+		}
+	}
+	if (_overwrite)
+		return true;
+	ofFile fileFile(filePath, ofFile::Reference, true);
+	if (fileFile.exists()) {
+		ofxLogErr("File " << filePath << " already exists");
+		return false;
+	}
+	return true;
+}
+
 bool ofxDownloader::initialize(const std::string &downloadDir, int32_t maxThreads, bool resume,
-	int32_t connectTimeout, int32_t downloadTimeout, DownloadCallback callback, void *opaque) {
+	bool overwrite, int32_t connectTimeout, int32_t downloadTimeout, DownloadCallback callback,
+	void *opaque) {
 	ofxLogVer("Initializing downloader");
 	if (_initialized) {
 		ofxLogErr("Downloader already initialized");
@@ -469,6 +499,7 @@ bool ofxDownloader::initialize(const std::string &downloadDir, int32_t maxThread
 	_downloadDir = downloadDir;
 	_maxThreads = maxThreads;
 	_resume = resume;
+	_overwrite = overwrite;
 	_connectTimeout = connectTimeout;
 	_downloadTimeout = downloadTimeout;
 	_callback = callback;
@@ -476,7 +507,72 @@ bool ofxDownloader::initialize(const std::string &downloadDir, int32_t maxThread
 	_pendingDownloads.clear();
 	_runningThreads.clear();
 	_buriedThreads.clear();
+	dir.allowExt("dif");
+	int32_t count = dir.listDir();
+	ofxLogVer("Found " << count << " info file(s) in " << downloadDir);
+	for (int32_t i = 0; i < count; i++) {
+		DownloadInfo info;
+		info._threadId = -1;
+		info._downloadId = ++_downloadId;
+		const std::string &path = dir.getPath(i);
+		if (!info.readFromFile(path)) {
+			ofxLogErr("Error while loading info file " << path);
+			return false;
+		}
+		if (!validateFile(info._filePath)) {
+			ofxLogErr("Error while validating file " << info._filePath);
+			return false;
+		}
+		queuePendingDownload(info);
+		startWorkerThread();
+	}
 	_initialized = true;
+	return true;
+}
+
+bool ofxDownloader::DownloadInfo::writeToFile(const std::string &path) {
+	ofxLogVer("Storing download info in " << path);
+	ofFile file;
+	if (!file.open(path, ofFile::WriteOnly, true)) {
+		ofxLogErr("Error while opening info file " << path << " for writing");
+		return false;
+	}
+	file << _url << std::endl;
+	file << _infoPath << std::endl;
+	file << _dataPath << std::endl;
+	file << _filePath << std::endl;
+	file << _length << std::endl;
+	file << _md5Digest << std::endl;
+	if (!file.good()) {
+		ofxLogErr("Error while writing to info file " << path);
+		return false;
+	}
+	return true;
+}
+
+bool ofxDownloader::DownloadInfo::readFromFile(const std::string &path) {
+	ofxLogVer("Loading download info from info file " << path);
+	ofFile file;
+	if (!file.open(path, ofFile::ReadOnly, true)) {
+		ofxLogErr("Error while opening info file " << path << " for reading");
+		return false;
+	}
+	std::getline(file, _url);
+	std::getline(file, _infoPath);
+	std::getline(file, _dataPath);
+	std::getline(file, _filePath);
+	std::string length;
+	std::getline(file, length);
+	std::istringstream iss(length);
+	if (!(iss >> _length)) {
+		ofxLogErr("Invalid length in info file " << path);
+		return false;
+	}
+	std::getline(file, _md5Digest);
+	if (!file.good()) {
+		ofxLogErr("Error while reading from info file " << path);
+		return false;
+	}
 	return true;
 }
 
@@ -492,17 +588,8 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 		return false;
 	const std::string &filePath = ofFilePath::join(_downloadDir, realFileName);
 	ofxLogVer("Downloading to " << filePath);
-	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
-		it != _pendingDownloads.end(); it++) {
-		if (it->_filePath == filePath) {
-			ofxLogErr("File name " << realFileName << " already in use by download #" <<
-				it->_downloadId);
-			return false;
-		}
-	}
-	ofFile fileFile(filePath, ofFile::Reference, true);
-	if (fileFile.exists()) {
-		ofxLogErr("File " << filePath << " already exists");
+	if (!validateFile(filePath)) {
+		ofxLogErr("Error while validating file " << filePath);
 		return false;
 	}
 	Poco::MD5Engine md5Engine;
@@ -533,6 +620,10 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	info._filePath = filePath;
 	info._length = length;
 	info._md5Digest = md5Digest;
+	if (!info.writeToFile(infoPath)) {
+		ofxLogErr("Error while storing info file " << infoPath);
+		return false;
+	}
 	queuePendingDownload(info);
 	startWorkerThread();
 	id = _downloadId;
@@ -557,7 +648,6 @@ const char *ofxDownloader::statusToText(DownloadStatus status) {
 }
 
 bool ofxDownloader::waitForDownload(int32_t id) {
-	getchar();
 	return false;
 }
 
