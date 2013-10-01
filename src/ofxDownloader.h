@@ -3,8 +3,10 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <ctype.h>
 #include <string>
 #include <list>
+#include <algorithm>
 #include <climits>
 #include <ofMain.h>
 #include <Poco/DigestEngine.h>

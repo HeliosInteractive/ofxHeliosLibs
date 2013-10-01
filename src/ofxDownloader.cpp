@@ -668,6 +668,7 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	info._filePath = filePath;
 	info._length = length;
 	info._md5Digest = md5Digest;
+	std::transform(info._md5Digest.begin(), info._md5Digest.end(), info._md5Digest.begin(), ::tolower);
 	if (!info.writeToFile(infoPath)) {
 		ofxLogErr("Error while storing info file " << infoPath);
 		return false;
