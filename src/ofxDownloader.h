@@ -21,15 +21,15 @@
 class ofxDownloader {
 public:
 	enum DownloadStatus {
-		DownloadStatusAdded,
 		DownloadStatusStarted,
 		DownloadStatusProgress,
-		DownloadStatusError,
+		DownloadStatusFailure,
+		DownloadStatusGivingUp,
 		DownloadStatusComplete
 	};
 
 	typedef bool (*DownloadCallback)(void *opaque, DownloadStatus status, int32_t id,
-		int64_t length);
+		int64_t length, int64_t total, int32_t tries);
 
 private:
 	friend class WorkerThread;

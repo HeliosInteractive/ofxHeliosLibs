@@ -77,7 +77,8 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 	_downloader->workerThreadAscension();
 	char buffer[BufferSize];
 	ofFile dataFile;
-	while (isThreadRunning()) {
+	bool done = false;
+	while (!done && isThreadRunning()) {
 		ofxLogVer("Thread #" << _threadId << " is in state " << stateToText(_state));
 		switch (_state) {
 		case WorkerThreadStateClaim: {
@@ -118,6 +119,9 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			ofxLogNot("Thread #" << _threadId << " claimed download #" << _info->_downloadId <<
 				" from " << _info->_url);
 			_state = WorkerThreadStateConnect;
+			if (_downloader->_callback != 0)
+				_downloader->_callback(_downloader->_opaque, DownloadStatusStarted, _info->_downloadId,
+					_received, _info->_length, _downloader->_maxTries - _info->_triesLeft + 1);
 			break;
 		}
 		case WorkerThreadStateConnect: {
@@ -250,6 +254,10 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					_state = WorkerThreadStateError;
 					continue;
 				}
+				if (_downloader->_callback != 0)
+					_downloader->_callback(_downloader->_opaque, DownloadStatusProgress,
+						_info->_downloadId, _received, _info->_length,
+						_downloader->_maxTries - _info->_triesLeft + 1);
 			} else {
 				ofxLogVer("End of stream or error for download #" << _info->_downloadId);
 				if (_info->_length >= 0 && _received != _info->_length) {
@@ -305,21 +313,34 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				_info->_triesLeft--;
 				ofxLogVer("Download #" << _info->_downloadId << " has " << _info->_triesLeft <<
 					" tr[y|ies] left");
-				if (_info->_triesLeft > 0)
+				if (_info->_triesLeft > 0) {
+					if (_downloader->_callback != 0)
+						_downloader->_callback(_downloader->_opaque, DownloadStatusFailure,
+							_info->_downloadId, _received, _info->_length,
+							_downloader->_maxTries - _info->_triesLeft);
 					_downloader->postponePendingDownload(_info);
-				else
+				} else {
+					if (_downloader->_callback != 0)
+						_downloader->_callback(_downloader->_opaque, DownloadStatusGivingUp,
+							_info->_downloadId, _received, _info->_length,
+							_downloader->_maxTries - _info->_triesLeft);
 					_downloader->completePendingDownload(_info);
+				}
 			}
-			goto leave;
+			done = true;
+			break;
 		}
 		case WorkerThreadStateComplete: {
 			ofxLogNot("Download #" << _info->_downloadId << " from " << _info->_url <<
 				" successfully completed on thread #" << _threadId);
+			if (_downloader->_callback != 0)
+				_downloader->_callback(_downloader->_opaque, DownloadStatusComplete, _info->_downloadId,
+					_received, _info->_length, _downloader->_maxTries - _info->_triesLeft + 1);
 			_downloader->completePendingDownload(_info);
-			goto leave;
+			done = true;
+			break;
 		}}
-	}
-leave:
+	}	
 	if (_session != 0) {
 		ofxLogVer("Deleting HTTP session");
 		delete _session;
@@ -659,14 +680,14 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 
 const char *ofxDownloader::statusToText(DownloadStatus status) {
 	switch (status) {
-	case DownloadStatusAdded:
-		return "Added";
 	case DownloadStatusStarted:
 		return "Started";
 	case DownloadStatusProgress:
 		return "Progress";
-	case DownloadStatusError:
-		return "Error";
+	case DownloadStatusFailure:
+		return "Failure";
+	case DownloadStatusGivingUp:
+		return "GivingUp";
 	case DownloadStatusComplete:
 		return "Complete";
 	default:
