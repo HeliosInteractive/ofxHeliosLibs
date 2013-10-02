@@ -10,7 +10,6 @@
 #include <climits>
 #include <ofMain.h>
 #include <Poco/DigestEngine.h>
-#include <Poco/MD5Engine.h>
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
@@ -19,6 +18,7 @@
 #include <Poco/Exception.h>
 #include "ofxAtomicLog.h"
 #include "ofxScopeMutex.h"
+#include "md5.h"
 
 class ofxDownloader {
 public:
@@ -71,7 +71,7 @@ private:
 		DownloadInfo *_info;
 		Poco::Net::HTTPClientSession *_session;
 		std::istream *_stream;
-		Poco::MD5Engine _md5Engine;
+		MD5_CTX _md5Context;
 		int64_t _received;
 
 		const char *stateToText(WorkerThreadState state);

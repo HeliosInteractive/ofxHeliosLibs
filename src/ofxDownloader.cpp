@@ -38,16 +38,13 @@ static const std::string urlToFileName(const std::string &url) {
 	return path.substr(off + 1, path.size() - off - 1);
 }
 
-static const std::string md5ToString(const Poco::DigestEngine::Digest &digest) {
+static const std::string md5ToString(const uint8_t md5Result[16]) {
 	static char hexDigits[17] = "0123456789abcdef";
 	char digestString[32];
-	int32_t i = 0;
-	for (Poco::DigestEngine::Digest::const_iterator it = digest.begin(); it != digest.end(); it++) {
-		digestString[2 * i] = hexDigits[(digest[i] >> 4) & 15];
-		digestString[2 * i + 1] = hexDigits[digest[i] & 15];
-		i++;
+	for (int32_t i = 0; i < 16; i++) {
+		digestString[2 * i] = hexDigits[md5Result[i] >> 4];
+		digestString[2 * i + 1] = hexDigits[md5Result[i] & 15];
 	}
-	assert(i == sizeof digestString / 2);
 	return std::string(digestString, sizeof digestString);
 }
 
@@ -97,6 +94,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				}
 			}
 			ofFile file(_info->_dataPath, ofFile::Reference, true);
+			MD5_Init(&_md5Context);
 			if (file.exists()) {
 				ofxLogVer("Data file " << _info->_dataPath << " exists already");
 				if (!_info->_resume) {
@@ -311,10 +309,14 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				streamsize count = _stream->gcount();
 				_received += count;
 				ofxLogVer("Received " << count << " (total: " << _received << ") byte(s)");
-				_md5Engine.update(buffer, count);
+				MD5_Update(&_md5Context, buffer, count);
 				if (!dataFile.writeFromBuffer(ofBuffer(buffer, count))) {
 					ofxLogErr("Error while writing " << count << " byte(s) to data file " <<
 						_info->_dataPath << " for download #" << _info->_downloadId);
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				if (false && _received == 10000) {
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -330,10 +332,14 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					_state = WorkerThreadStateError;
 					continue;
 				} else if (_info->_md5Digest.size() > 0) {
-					const std::string &digest = md5ToString(_md5Engine.digest());
+					uint8_t md5Result[16];
+					MD5_Final(md5Result, &_md5Context);
+					const std::string &digest = md5ToString(md5Result);
 					if (digest != _info->_md5Digest) {
 						ofxLogErr("MD5 digest mismatch for download #" << _info->_downloadId << " (" <<
 							digest << " vs. " << _info->_md5Digest << ")");
+						if (_info->_length >= 0 && _received == _info->_length)
+							_info->_resume = false;
 						_state = WorkerThreadStateError;
 						continue;
 					}
@@ -388,10 +394,12 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 						dataFile.close();
 					}
 					ofxLogVer("Removing info and data files");
-					if (!ofFile::removeFile(_info->_infoPath, false))
-						ofxLogErr("Error while removing info file " << _info->_infoPath);
-					if (!ofFile::removeFile(_info->_dataPath, false))
-						ofxLogErr("Error while removing data file " << _info->_dataPath);
+					if (!ofFile::removeFile(_info->_infoPath, false)) {
+						ofxLogErr("Error while removing info file " << _info->_infoPath);						
+					}
+					if (!ofFile::removeFile(_info->_dataPath, false)) {
+						ofxLogErr("Error while removing data file " << _info->_dataPath);						
+					}
 					if (_downloader->_callback != 0)
 						_downloader->_callback(_downloader->_opaque, DownloadStatusGivingUp,
 							_info->_downloadId, _received, _info->_length,
@@ -711,12 +719,15 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 		ofxLogErr("Error while validating file " << filePath);
 		return false;
 	}
-	Poco::MD5Engine md5Engine;
-	md5Engine.update(&_startTime, sizeof _startTime);
-	md5Engine.update(&_downloadId, sizeof _downloadId);
-	md5Engine.update(url);
-	md5Engine.update(fileName);
-	const std::string &suffix = md5ToString(md5Engine.digest());
+	MD5_CTX md5Context;
+	MD5_Init(&md5Context);
+	MD5_Update(&md5Context, &_startTime, sizeof _startTime);
+	MD5_Update(&md5Context, &_downloadId, sizeof _downloadId);
+	MD5_Update(&md5Context, url.data(), url.size());
+	MD5_Update(&md5Context, fileName.data(), fileName.size());
+	uint8_t md5Result[16];
+	MD5_Final(md5Result, &md5Context);
+	const std::string &suffix = md5ToString(md5Result);
 	const std::string &infoPath = ofFilePath::join(_downloadDir, makeInfoFileName(suffix));
 	const std::string &dataPath = ofFilePath::join(_downloadDir, makeDataFileName(suffix));
 	ofxLogVer("Using info file " << infoPath << ", data file " << dataPath);
