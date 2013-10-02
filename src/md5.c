@@ -196,6 +196,14 @@ static const void *body(MD5_CTX *ctx, const void *data, uint32_t size)
 
 void MD5_Init(MD5_CTX *ctx)
 {
+	int32_t i;
+
+	for (i = 0; i < 64; i++)
+		ctx->buffer[i] = 0;
+
+	for (i = 0; i < 16; i++)
+		ctx->block[i] = 0;
+
 	ctx->a = 0x67452301;
 	ctx->b = 0xefcdab89;
 	ctx->c = 0x98badcfe;
