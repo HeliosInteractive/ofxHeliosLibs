@@ -368,8 +368,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 		}
 		case WorkerThreadStateError: {
 			if (_info == 0)
-#warning FIX LOGGING MACRO
-				ofxLogErr("Download failed on thread #" << _threadId) // no semicolon
+				ofxLogErr("Download failed on thread #" << _threadId);
 			else {
 				ofxLogErr("Download #" << _info->_downloadId << " from " << _info->_url <<
 					" failed on thread #" << _threadId);

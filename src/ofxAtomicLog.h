@@ -18,11 +18,23 @@ public:
 	}
 };
 
-extern ofMutex _ofxAtomicLogMutex;
+// a little messy. here's why:
 
-#define ofxAtomicBlock(x) { ofxAtomicLog::lock(); x; ofxAtomicLog::unlock(); }
-#define ofxLogVer(x) { ofxAtomicBlock(ofLogVerbose() << "[" << ofxAtomicLog::threadId() << "] " << x); }
-#define ofxLogNot(x) { ofxAtomicBlock(ofLogNotice() << "[" << ofxAtomicLog::threadId() << "] " << x); }
-#define ofxLogWar(x) { ofxAtomicBlock(ofLogWarning() << "[" << ofxAtomicLog::threadId() << "] " << x); }
-#define ofxLogErr(x) { ofxAtomicBlock(ofLogError() << "[" << ofxAtomicLog::threadId() << "] " << x); }
-#define ofxLogFat(x) { ofxAtomicBlock(ofLogFatalError() << "[" << ofxAtomicLog::threadId() << "] " << x); }
+// (1) what we're solving here: the destructor of the ofLogVerbose(),
+// ofLogNotice(), ... objects does the logging, so we need to trigger
+// the destructor of these objects before we unlock our mutex.
+
+// (2) while we are at this, let's check the log level, before evaluating
+// the log expression, so that we don't evaluate to build the log message,
+// just to later throw the log message away, in case the log level prevents
+// the message from being logged
+
+// (3) use "if (...) ; else ..." so that we don't break any "if" branches
+// in the code that uses our macros
+
+#define ofxAtomicBlock(x) ofxAtomicLog::lock(), x, ofxAtomicLog::unlock()
+#define ofxLogVer(x) if (ofGetLogLevel() > OF_LOG_VERBOSE) ; else ofxAtomicBlock(delete &(*new ofLogVerbose() << "[" << ofxAtomicLog::threadId() << "] " << x))
+#define ofxLogNot(x) if (ofGetLogLevel() > OF_LOG_NOTICE) ; else ofxAtomicBlock(delete &(*new ofLogNotice() << "[" << ofxAtomicLog::threadId() << "] " << x))
+#define ofxLogWar(x) if (ofGetLogLevel() > OF_LOG_WARNING) ; else ofxAtomicBlock(delete &(*new ofLogWarning() << "[" << ofxAtomicLog::threadId() << "] " << x))
+#define ofxLogErr(x) if (ofGetLogLevel() > OF_LOG_ERROR) ; else ofxAtomicBlock(delete &(*new ofLogError() << "[" << ofxAtomicLog::threadId() << "] " << x))
+#define ofxLogFat(x) if (ofGetLogLevel() > OF_LOG_FATAL_ERROR) ; else ofxAtomicBlock(delete &(*new ofLogFatalError() << "[" << ofxAtomicLog::threadId() << "] " << x))
