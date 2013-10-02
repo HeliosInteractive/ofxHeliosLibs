@@ -655,10 +655,7 @@ void ofxDownloader::buryWorkerThreadLocked(WorkerThread *thread) {
 void ofxDownloader::stopWorkerThreads() {
 	ofxScopeMutex m(_mutex);
 	ofxLogVer("Stopping all worker threads");
-	while (true) {
-		ofxLogVer("Checking for worker threads");
-		if (_runningThreads.size() == 0)
-			break;
+	while (_runningThreads.size() > 0) {
 		WorkerThread *thread = _runningThreads.front();
 		_runningThreads.pop_front();
 		ofxLogVer("Stopping thread #" << thread->_threadId);
@@ -672,6 +669,7 @@ void ofxDownloader::stopWorkerThreads() {
 		ofxLogVer("Thread #" << thread->_threadId << " stopped");
 		delete thread;
 	}
+	ofxLogVer("All worker threads stopped");
 }
 
 void ofxDownloader::workerThreadAscension() {
