@@ -12,6 +12,12 @@ static const std::string makeDataFileName(const std::string &suffix) {
 	return PREFIX + suffix + EXTENSION;
 }
 
+static const std::string makeHashFileName(const std::string &suffix) {
+	static const std::string PREFIX("!!!-");
+	static const std::string EXTENSION(".dhf");
+	return PREFIX + suffix + EXTENSION;
+}
+
 static const std::string urlToFileName(const std::string &url) {
 	ofxLogVer("Extracting file name from " << url);
 	std::string scheme, path;
@@ -69,6 +75,38 @@ const char *ofxDownloader::WorkerThread::stateToText(WorkerThreadState state) {
 
 static const int32_t BufferSize = 10000;
 
+bool ofxDownloader::WorkerThread::readHashFile(MD5_CTX &md5Context, const std::string &path) {
+	ofxLogVer("Loading MD5 context from " << path);
+	ofFile file;
+	if (!file.open(path, ofFile::ReadOnly, true)) {
+		ofxLogErr("Error while opening hash file " << path << " for reading");
+		return false;
+	}
+	const ofBuffer &buffer = file.readToBuffer();
+	if (buffer.size() != sizeof md5Context) {
+		ofxLogErr("Unexpected amount of data read from hash file " << path << "(" << buffer.size() <<
+			" vs. " << sizeof md5Context);
+		return false;
+	}
+	memcpy(&md5Context, buffer.getBinaryBuffer(), sizeof md5Context);
+	return true;
+}
+
+bool ofxDownloader::WorkerThread::writeHashFile(const MD5_CTX &md5Context, const std::string &path) {
+	ofxLogVer("Storing MD5 context in " << path);
+	ofFile file;
+	if (!file.open(path, ofFile::WriteOnly, true)) {
+		ofxLogErr("Error while opening hash file " << path << " for writing");
+		return false;
+	}
+	if (!file.writeFromBuffer(ofBuffer(reinterpret_cast<const char *>(&md5Context),
+		sizeof md5Context)) || !file.good()) {
+		ofxLogErr("Error while writing to hash file " << path);
+		return false;
+	}
+	return true;
+}
+
 void ofxDownloader::WorkerThread::threadedFunction() {	
 	ofxLogVer("Entering thread #" << _threadId);
 	_downloader->workerThreadAscension();
@@ -80,6 +118,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 		switch (_state) {
 		case WorkerThreadStateClaim: {
 			if ((_info = _downloader->claimPendingDownload(_threadId)) == 0) {
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -93,28 +132,61 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					sleep(1000);
 				}
 			}
-			ofFile file(_info->_dataPath, ofFile::Reference, true);
-			MD5_Init(&_md5Context);
-			if (file.exists()) {
+			ofFile exDataFile(_info->_dataPath, ofFile::Reference, true);
+			ofFile exHashFile(_info->_hashPath, ofFile::Reference, true);
+			if (exDataFile.exists()) {
 				ofxLogVer("Data file " << _info->_dataPath << " exists already");
 				if (!_info->_resume) {
 					ofxLogVer("Removing existing data file " << _info->_dataPath);
-					if (!file.remove()) {
+					if (!exDataFile.remove()) {
 						ofxLogErr("Error while removing existing data file " << _info->_dataPath <<
 							" for download #" << _info->_downloadId);
+						_info->_resume = false;
 						_state = WorkerThreadStateError;
 						continue;
 					}
 				} else {
-					_received = file.getSize();
+					_received = exDataFile.getSize();
 					ofxLogVer("Keeping existing data file " << _info->_dataPath << " with " <<
 						_received << " byte(s)");
+				}
+			}
+			if (_received > 0) {
+				ofxLogVer("Looking for hash file " << _info->_hashPath << " for data file " <<
+					_info->_dataPath);
+				if (!exHashFile.exists()) {
+					ofxLogErr("Missing hash file " << _info->_hashPath << " for data file " <<
+						_info->_dataPath << " with length " << _received << " for download #" <<
+						_info->_downloadId);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				if (!readHashFile(_md5Context, _info->_hashPath)) {
+					ofxLogErr("Error while reading hash file " << _info->_hashPath << " for download #" <<
+						_info->_downloadId);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+			} else {
+				MD5_Init(&_md5Context);
+				if (exHashFile.exists()) {
+					ofxLogVer("Removing existing hash file " << _info->_hashPath);
+					if (!exHashFile.remove()) {
+						ofxLogErr("Error while removing existing hash file " << _info->_hashPath <<
+							"for download #" << _info->_downloadId);
+						_info->_resume = false;
+						_state = WorkerThreadStateError;
+						continue;
+					}
 				}
 			}
 			ofxLogVer("Opening data file " << _info->_dataPath);
 			if (!dataFile.open(_info->_dataPath, ofFile::Append, true)) {
 				ofxLogErr("Error while opening data file " << _info->_dataPath << " for download #" <<
 					_info->_downloadId);
+				_info->_resume = false;
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -138,6 +210,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			} catch (Poco::Exception &ex) {
 				ofxLogErr("Error while parsing URL " << _info->_url << " for download #" <<
 					_info->_downloadId << ": " << ex.name() << " (" << ex.message() << ")");
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -148,6 +221,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			} catch (Poco::Exception &ex) {
 				ofxLogErr("Error while resolving server DNS name " << host << " for download #" <<
 					_info->_downloadId << ": " << ex.name() << " (" << ex.message() << ")");
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -174,6 +248,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				ofxLogErr("Error while connecting to IP address " << ipAddress.toString() << " (" <<
 					host << ") for download #" << _info->_downloadId << ": " << ex.name() << " (" <<
 					ex.message() << ")");
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -184,6 +259,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			} catch (Poco::Exception &ex) {
 				ofxLogErr("Error while receiving HTTP response from " << host << " for download #" <<
 					_info->_downloadId << ": " << ex.name() << " (" << ex.message() << ")");
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -236,6 +312,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				if (!response.has("Location")) {
 					ofxLogErr("HTTP " << response.getStatus() << " redirection without location header"
 						" from " << host << " for download #" << _info->_downloadId);
+					_info->_resume = false;
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -252,6 +329,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			default: {
 				ofxLogErr("HTTP response with invalid HTTP status code " << response.getStatus() <<
 					" from " << host << " for download #" << _info->_downloadId);
+				// resume
 				_state = WorkerThreadStateError;
 				continue;
 			}}
@@ -283,6 +361,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					ofxLogErr("Length mismatch between known length " << _info->_length << " and "
 						"content length " << contentLength << " from " << host << " for download #" <<
 						_info->_downloadId);
+					_info->_resume = false;
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -291,6 +370,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				if (_info->_length < 0 && _info->_md5Digest.empty()) {
 					ofxLogErr("HTTP response from " << host << " without Content-Length header for "
 						"download #" << _info->_downloadId << " without known length or MD5 digest");
+					_info->_resume = false;
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -313,10 +393,19 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				if (!dataFile.writeFromBuffer(ofBuffer(buffer, count))) {
 					ofxLogErr("Error while writing " << count << " byte(s) to data file " <<
 						_info->_dataPath << " for download #" << _info->_downloadId);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				if (!writeHashFile(_md5Context, _info->_hashPath)) {
+					ofxLogErr("Error while updating hash file " << _info->_hashPath << " for download#" <<
+						_info->_downloadId);
+					_info->_resume = false;
 					_state = WorkerThreadStateError;
 					continue;
 				}
 				if (false && _received == 10000) {
+					// resume for testing
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -329,6 +418,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				if (_info->_length >= 0 && _received != _info->_length) {
 					ofxLogErr("Unexpected amount of received data for download #" << _info->_downloadId <<
 						" (" << _received << " vs. " << _info->_length << ")");
+					// resume
 					_state = WorkerThreadStateError;
 					continue;
 				} else if (_info->_md5Digest.size() > 0) {
@@ -338,6 +428,8 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					if (digest != _info->_md5Digest) {
 						ofxLogErr("MD5 digest mismatch for download #" << _info->_downloadId << " (" <<
 							digest << " vs. " << _info->_md5Digest << ")");
+						// don't resume, if the length is correct, but the MD5
+						// digest is wrong
 						if (_info->_length >= 0 && _received == _info->_length)
 							_info->_resume = false;
 						_state = WorkerThreadStateError;
@@ -359,12 +451,21 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			if (!ofFile::moveFromTo(_info->_dataPath, _info->_filePath, false, true)) {
 				ofxLogErr("Error while renaming data file " << _info->_dataPath << " to " <<
 					_info->_filePath << " for download #" << _info->_downloadId);
+				_info->_resume = false;
+				_state = WorkerThreadStateError;
+				continue;
+			}
+			if (!ofFile::removeFile(_info->_hashPath, false)) {
+				ofxLogErr("Error while removing hash file " << _info->_hashPath << " for download #" <<
+					_info->_downloadId);
+				_info->_resume = false;
 				_state = WorkerThreadStateError;
 				continue;
 			}
 			if (!ofFile::removeFile(_info->_infoPath, false)) {
 				ofxLogErr("Error while removing info file " << _info->_infoPath << " for download #" <<
 					_info->_downloadId);
+				_info->_resume = false;
 				_state = WorkerThreadStateError;
 				continue;
 			}
@@ -393,12 +494,17 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 						ofxLogVer("Closing data file");
 						dataFile.close();
 					}
-					ofxLogVer("Removing info and data files");
+					ofxLogVer("Removing info, data, and hash files");
 					if (!ofFile::removeFile(_info->_infoPath, false)) {
 						ofxLogErr("Error while removing info file " << _info->_infoPath);						
 					}
-					if (!ofFile::removeFile(_info->_dataPath, false)) {
+					ofFile rmDataFile(_info->_dataPath, ofFile::Reference, true);
+					ofFile rmHashFile(_info->_hashPath, ofFile::Reference, true);
+					if (rmDataFile.exists() && !rmDataFile.remove(false)) {
 						ofxLogErr("Error while removing data file " << _info->_dataPath);						
+					}
+					if (rmHashFile.exists() && !rmHashFile.remove(false)) {
+						ofxLogErr("Error while removing hash file " << _info->_hashPath);						
 					}
 					if (_downloader->_callback != 0)
 						_downloader->_callback(_downloader->_opaque, DownloadStatusGivingUp,
@@ -667,6 +773,7 @@ bool ofxDownloader::DownloadInfo::writeToFile(const std::string &path) {
 	file << _url << std::endl;
 	file << _infoPath << std::endl;
 	file << _dataPath << std::endl;
+	file << _hashPath << std::endl;
 	file << _filePath << std::endl;
 	file << _length << std::endl;
 	file << _md5Digest << std::endl;
@@ -687,6 +794,7 @@ bool ofxDownloader::DownloadInfo::readFromFile(const std::string &path) {
 	std::getline(file, _url);
 	std::getline(file, _infoPath);
 	std::getline(file, _dataPath);
+	std::getline(file, _hashPath);
 	std::getline(file, _filePath);
 	std::string length;
 	std::getline(file, length);
@@ -730,7 +838,9 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	const std::string &suffix = md5ToString(md5Result);
 	const std::string &infoPath = ofFilePath::join(_downloadDir, makeInfoFileName(suffix));
 	const std::string &dataPath = ofFilePath::join(_downloadDir, makeDataFileName(suffix));
-	ofxLogVer("Using info file " << infoPath << ", data file " << dataPath);
+	const std::string &hashPath = ofFilePath::join(_downloadDir, makeHashFileName(suffix));
+	ofxLogVer("Using info file " << infoPath << ", data file " << dataPath << ", hash file " <<
+		hashPath);
 	ofFile infoFile(infoPath, ofFile::Reference, true);
 	if (infoFile.exists()) {
 		ofxLogErr("AMAZING! Info file " << infoPath << " already exists");
@@ -739,6 +849,11 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	ofFile dataFile(dataPath, ofFile::Reference, true);
 	if (dataFile.exists()) {
 		ofxLogErr("AMAZING! Data file " << dataPath << " already exists");
+		return false;
+	}
+	ofFile hashFile(hashPath, ofFile::Reference, true);
+	if (hashFile.exists()) {
+		ofxLogErr("AMAZING! Hash file " << hashPath << " already exists");
 		return false;
 	}
 	DownloadInfo info;
@@ -750,6 +865,7 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	info._url = url;
 	info._infoPath = infoPath;
 	info._dataPath = dataPath;
+	info._hashPath = hashPath;
 	info._filePath = filePath;
 	info._length = length;
 	info._md5Digest = md5Digest;

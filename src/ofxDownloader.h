@@ -46,6 +46,7 @@ private:
 		std::string _url;
 		std::string _infoPath;
 		std::string _dataPath;
+		std::string _hashPath;
 		std::string _filePath;
 		int64_t _length;
 		std::string _md5Digest;
@@ -74,6 +75,8 @@ private:
 		MD5_CTX _md5Context;
 		int64_t _received;
 
+		bool readHashFile(MD5_CTX &md5Context, const std::string &path);
+		bool writeHashFile(const MD5_CTX &md5Context, const std::string &path);
 		const char *stateToText(WorkerThreadState state);
 		void threadedFunction();
 
