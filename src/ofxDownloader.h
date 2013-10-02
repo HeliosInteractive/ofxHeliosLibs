@@ -39,6 +39,7 @@ private:
 	class DownloadInfo {
 	public:
 		int32_t _threadId;
+		bool _available;
 		int32_t _downloadId;
 		int32_t _triesLeft;
 		time_t _failureTime;
@@ -110,6 +111,7 @@ private:
 
 	// the following are protected by _mutex
 	std::list<DownloadInfo> _pendingDownloads;
+	int32_t _unavailable;
 	std::list<WorkerThread *> _runningThreads;
 	std::list<WorkerThread *> _buriedThreads;
 
@@ -125,9 +127,12 @@ private:
 	void workerThreadAscension();
 	void stopWorkerThreads();
 	bool validateFile(const std::string &filePath);
+	bool stopDownloadLocked(DownloadInfo &info);
+	bool stopDownload(int32_t id, std::string &infoPath, std::string &dataPath, std::string &hashPath);
 
 public:
-	ofxDownloader(): _threadId(0), _downloadId(0), _startTime(time(0)), _initialized(false) {}
+	ofxDownloader(): _threadId(0), _downloadId(0), _startTime(time(0)), _initialized(false),
+		_unavailable(0) {}
 	bool initialize(std::vector<int32_t> &ids, const std::string &downloadDir, int32_t maxThreads = 3,
 		int32_t maxTries = 3, int32_t retryDelay = 10, bool resume = true, bool overwrite = false,
 		int32_t connectTimeout = ConnectTimeout, int32_t downloadTimeout = DownloadTimeout,
@@ -135,7 +140,6 @@ public:
 	bool addDownload(int32_t &id, const std::string &url, const std::string &fileName = "",
 		int64_t length = -1, const std::string &md5Digest = "");
 	const char *statusToText(DownloadStatus status);
-	bool waitForDownload(int32_t id);
 	bool stopDownload(int32_t id);
 	bool cancelDownload(int32_t id);
 	bool clearDownloadDir();

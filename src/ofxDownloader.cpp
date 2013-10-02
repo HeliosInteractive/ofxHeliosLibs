@@ -500,10 +500,10 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					}
 					ofFile rmDataFile(_info->_dataPath, ofFile::Reference, true);
 					ofFile rmHashFile(_info->_hashPath, ofFile::Reference, true);
-					if (rmDataFile.exists() && !rmDataFile.remove(false)) {
+					if (rmDataFile.exists() && !rmDataFile.remove()) {
 						ofxLogErr("Error while removing data file " << _info->_dataPath);						
 					}
-					if (rmHashFile.exists() && !rmHashFile.remove(false)) {
+					if (rmHashFile.exists() && !rmHashFile.remove()) {
 						ofxLogErr("Error while removing hash file " << _info->_hashPath);						
 					}
 					if (_downloader->_callback != 0)
@@ -543,8 +543,9 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			_downloader->buryWorkerThreadLocked(this);
 			int32_t numDo = _downloader->_pendingDownloads.size();
 			int32_t numTh = _downloader->_runningThreads.size();
-			ofxLogVer(numDo << " pending download(s), " << numTh << " running thread(s)");
-			if (numDo > numTh)
+			ofxLogVer(numDo << " pending download(s), " << _downloader->_unavailable <<
+				" unavailable, " << numTh << " running thread(s)");
+			if (numDo > numTh + _downloader->_unavailable)
 				_downloader->startWorkerThreadLocked();
 		} else
 			ofxLogVer("No removal, burials, or new threads during shutdown");
@@ -557,7 +558,7 @@ ofxDownloader::DownloadInfo *ofxDownloader::claimPendingDownload(int32_t threadI
 	ofxLogVer("Thread #" << threadId << " trying to claim a download");
 	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
 		it != _pendingDownloads.end(); it++) {
-		if (it->_threadId < 0) {
+		if (it->_threadId < 0 && it->_available) {
 			ofxLogVer("Thread #" << _threadId << " claimed download #" << it->_downloadId);
 			it->_threadId = threadId;
 			return &*it;
@@ -572,9 +573,10 @@ bool ofxDownloader::releasePendingDownload(const DownloadInfo *info, bool comple
 	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
 		it != _pendingDownloads.end(); it++)
 		if (&*it == info) {
-			if (complete)
+			if (complete) {
 				_pendingDownloads.erase(it);
-			else {
+				ofxLogVer(_pendingDownloads.size() << " pending download(s) [-]");
+			} else {
 				it->_threadId = -1;
 				_pendingDownloads.splice(_pendingDownloads.end(), _pendingDownloads, it);
 			}
@@ -609,6 +611,7 @@ void ofxDownloader::queuePendingDownload(const DownloadInfo &info) {
 	ofxScopeMutex m(_mutex);
 	ofxLogVer("Queueing download #" << info._downloadId);
 	_pendingDownloads.push_back(info);
+	ofxLogVer(_pendingDownloads.size() << " pending download(s) [+]");
 }
 
 void ofxDownloader::startWorkerThreadLocked() {
@@ -618,6 +621,7 @@ void ofxDownloader::startWorkerThreadLocked() {
 		_runningThreads.push_back(thread);
 		ofxLogVer("Created new thread #" << _threadId << ", now " << _runningThreads.size() <<
 			" thread(s) of " << _maxThreads);
+		ofxLogVer(_runningThreads.size() << " running thread(s) [+]");
 		thread->startThread();
 	} else
 		ofxLogVer(_runningThreads.size() << " thread(s) running already");	
@@ -635,6 +639,7 @@ bool ofxDownloader::removeWorkerThreadLocked(int32_t threadId) {
 		if ((*it)->_threadId == threadId) {
 			_runningThreads.erase(it);
 			ofxLogVer("Thread #" << threadId << " removed");
+			ofxLogVer(_runningThreads.size() << " running thread(s) [-]");
 			return true;
 		}
 	}
@@ -648,23 +653,22 @@ void ofxDownloader::buryWorkerThreadLocked(WorkerThread *thread) {
 }
 
 void ofxDownloader::stopWorkerThreads() {
+	ofxScopeMutex m(_mutex);
 	ofxLogVer("Stopping all worker threads");
 	while (true) {
-		WorkerThread *thread;
-		{
-				ofxScopeMutex m(_mutex);
-				ofxLogVer("Checking for worker threads");
-				if (_runningThreads.size() == 0)
-					break;
-				thread = _runningThreads.front();
-				_runningThreads.pop_front();
-				ofxLogVer("Stopping thread #" << thread->_threadId);
-				thread->stopThread();
-		}
+		ofxLogVer("Checking for worker threads");
+		if (_runningThreads.size() == 0)
+			break;
+		WorkerThread *thread = _runningThreads.front();
+		_runningThreads.pop_front();
+		ofxLogVer("Stopping thread #" << thread->_threadId);
+		thread->stopThread();
+		_mutex.unlock();
 		// waitForThread() doesn't join, if the thread is not running anymore,
 		// which leads to a pthread resource leak
 		thread->getPocoThread().tryJoin(10 * 1000);
 		thread->waitForThread();
+		_mutex.lock();
 		ofxLogVer("Thread #" << thread->_threadId << " stopped");
 		delete thread;
 	}
@@ -741,6 +745,7 @@ bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &dow
 	for (int32_t i = 0; i < count; i++) {
 		DownloadInfo info;
 		info._threadId = -1;
+		info._available = true;
 		info._downloadId = ++_downloadId;
 		tmpIds.push_back(info._downloadId);
 		info._triesLeft = _maxTries;
@@ -858,6 +863,7 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	}
 	DownloadInfo info;
 	info._threadId = -1;
+	info._available = true;
 	info._downloadId = ++_downloadId;
 	info._triesLeft = _maxTries;
 	info._failureTime = 0;
@@ -897,16 +903,116 @@ const char *ofxDownloader::statusToText(DownloadStatus status) {
 	}
 }
 
-bool ofxDownloader::waitForDownload(int32_t id) {
+bool ofxDownloader::stopDownloadLocked(DownloadInfo &info) {
+	if (info._threadId >= 0) {
+		ofxLogVer("Download #" << info._downloadId << " currently claimed by thread #" <<
+			info._threadId);
+		for (std::list<WorkerThread *>::iterator it = _runningThreads.begin();
+			it != _runningThreads.end(); it++) {
+			WorkerThread *thread = *it;
+			if (thread->_threadId == info._threadId) {
+				ofxLogVer("Thread #" << thread->_threadId << " found, stopping it");
+				info._threadId = -1;
+				info._available = false;
+				// keep other threads from launching a new thread in order
+				// to claim this download
+				_unavailable++;
+				ofxLogVer(_unavailable << " unavailable download(s) [+]");
+				_runningThreads.erase(it);
+				ofxLogVer(_runningThreads.size() << " running thread(s) [-]");
+				thread->stopThread();
+				_mutex.unlock();
+				// see stopWorkerThreads()
+				thread->getPocoThread().tryJoin(10 * 1000);
+				thread->waitForThread();
+				_mutex.lock();
+				ofxLogVer("Thread #" << thread->_threadId << " stopped");
+				delete thread;
+				info._available = true;
+				_unavailable--;
+				ofxLogVer(_unavailable << " unavailable download(s) [-]");
+				// don't touch the iterator, it may now be invalid
+				goto notClaimed;
+			}
+		}
+		ofxLogErr("Thread #" << info._threadId << " of download #" << info._downloadId <<
+			" does not exist");
+		return false;
+	}
+notClaimed:
+	ofxLogVer("Download #" << info._downloadId << " not currently claimed");
+	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
+		it != _pendingDownloads.end(); it++) {
+		if (it->_downloadId == info._downloadId) {
+			ofxLogVer("Removing download #" << info._downloadId);
+			_pendingDownloads.erase(it);
+			ofxLogVer(_pendingDownloads.size() << " pending download(s) [-]");
+			return true;
+		}
+	}
+	ofxLogErr("AMAZING! Download #" << info._downloadId << " disappeared!");
+	return false;
+}
+
+bool ofxDownloader::stopDownload(int32_t id, std::string &infoPath, std::string &dataPath,
+	std::string &hashPath) {
+	ofxScopeMutex m(_mutex);
+	ofxLogVer("Stopping download #" << id);
+	if (!_initialized) {
+		ofxLogErr("Downloader not initialized");
+		return false;
+	}
+	for (std::list<DownloadInfo>::iterator it = _pendingDownloads.begin();
+		it != _pendingDownloads.end(); it++) {
+		if (it->_downloadId == id) {
+			ofxLogVer("Download #" << id << " found");
+			infoPath = it->_infoPath;
+			dataPath = it->_dataPath;
+			hashPath = it->_hashPath;
+			return stopDownloadLocked(*it);
+		}
+	}
+	ofxLogErr("Download #" << id << " does not exist");
 	return false;
 }
 
 bool ofxDownloader::stopDownload(int32_t id) {
-	return false;
+	std::string dummy;
+	return stopDownload(id, dummy, dummy, dummy);
 }
 
 bool ofxDownloader::cancelDownload(int32_t id) {
-	return false;
+	std::string infoPath, dataPath, hashPath;
+	if (!stopDownload(id, infoPath, dataPath, hashPath)) {
+		ofxLogErr("Error while stopping download #" << id);
+		return false;
+	}
+	bool result = true;
+	if (infoPath.size() > 0) {
+		ofxLogVer("Removing info file " << infoPath);
+		ofFile infoFile(infoPath, ofFile::Reference, true);
+		if (infoFile.exists() && !infoFile.remove()) {
+			ofxLogErr("Error while removing info file " << infoPath << " of download #" << id);
+			result = false;
+		}
+	}
+	if (dataPath.size() > 0) {
+		ofxLogVer("Removing data file " << dataPath);
+		ofFile dataFile(dataPath, ofFile::Reference, true);
+		if (dataFile.exists() && !dataFile.remove()) {
+			ofxLogErr("Error while removing data file " << dataPath << " of download #" << id);
+			result = false;
+		}
+	}
+	if (hashPath.size() > 0) {
+		ofxLogVer("Removing hash file " << hashPath);
+		ofFile hashFile(hashPath, ofFile::Reference, true);
+		if (hashFile.exists() && !hashFile.remove()) {
+			ofxLogErr("Error while removing hash file " << hashPath << " of download #" << id);
+			result = false;
+		}
+	}
+	return result;
 }
 
 bool ofxDownloader::clearDownloadDir() {
@@ -923,5 +1029,5 @@ bool ofxDownloader::shutDown() {
 	workerThreadAscension();
 	_pendingDownloads.clear();
 	_initialized = false;
-	return false;
+	return true;
 }
