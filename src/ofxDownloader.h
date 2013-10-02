@@ -142,6 +142,6 @@ public:
 	const char *statusToText(DownloadStatus status);
 	bool stopDownload(int32_t id);
 	bool cancelDownload(int32_t id);
-	bool clearDownloadDir();
+	static bool clearDownloadDir(const std::string &downloadDir);
 	bool shutDown();
 };

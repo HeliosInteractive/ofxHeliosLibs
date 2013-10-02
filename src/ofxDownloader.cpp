@@ -1,21 +1,21 @@
 #include "ofxDownloader.h"
 
+static const std::string FILE_PREFIX("!!!-");
+static const std::string FILE_DOT(".");
+static const std::string INFO_EXTENSION("dif");
+static const std::string DATA_EXTENSION("ddf");
+static const std::string HASH_EXTENSION("dhf");
+
 static const std::string makeInfoFileName(const std::string &suffix) {
-	static const std::string PREFIX("!!!-");
-	static const std::string EXTENSION(".dif");
-	return PREFIX + suffix + EXTENSION;
+	return FILE_PREFIX + suffix + FILE_DOT + INFO_EXTENSION;
 }
 
 static const std::string makeDataFileName(const std::string &suffix) {
-	static const std::string PREFIX("!!!-");
-	static const std::string EXTENSION(".ddf");
-	return PREFIX + suffix + EXTENSION;
+	return FILE_PREFIX + suffix + FILE_DOT + DATA_EXTENSION;
 }
 
 static const std::string makeHashFileName(const std::string &suffix) {
-	static const std::string PREFIX("!!!-");
-	static const std::string EXTENSION(".dhf");
-	return PREFIX + suffix + EXTENSION;
+	return FILE_PREFIX + suffix + FILE_DOT + HASH_EXTENSION;
 }
 
 static const std::string urlToFileName(const std::string &url) {
@@ -736,7 +736,7 @@ bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &dow
 	_pendingDownloads.clear();
 	_runningThreads.clear();
 	_buriedThreads.clear();
-	dir.allowExt("dif");
+	dir.allowExt(INFO_EXTENSION);
 	int32_t count = dir.listDir();
 	ofxLogVer("Found " << count << " info file(s) in " << downloadDir);
 	std::vector<int32_t> tmpIds;
@@ -1013,8 +1013,32 @@ bool ofxDownloader::cancelDownload(int32_t id) {
 	return result;
 }
 
-bool ofxDownloader::clearDownloadDir() {
-	return false;
+bool ofxDownloader::clearDownloadDir(const std::string &downloadDir) {
+	ofxLogVer("Clearing download directory " << downloadDir);
+	ofDirectory dir(downloadDir);
+	if (!dir.exists()) {
+		ofxLogErr("Download directory " << downloadDir << " does not exist");
+		return false;
+	}
+	if (!dir.isDirectory()) {
+		ofxLogErr("Download directory " << downloadDir << " is not a directory");
+		return false;
+	}
+	dir.allowExt(INFO_EXTENSION);
+	dir.allowExt(DATA_EXTENSION);
+	dir.allowExt(HASH_EXTENSION);
+	int32_t count = dir.listDir();
+	ofxLogVer("Found " << count << " info, data, and hash file(s) in " << downloadDir);
+	bool result = true;
+	for (int32_t i = 0; i < count; i++) {
+		const std::string &path = dir.getPath(i);
+		ofxLogVer("Removing " << path);
+		if (!ofFile::removeFile(path, false)) {
+			ofxLogErr("Error while removing " << path);
+			result = false;
+		}
+	}
+	return result;
 }
 
 bool ofxDownloader::shutDown() {
