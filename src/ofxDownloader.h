@@ -42,6 +42,7 @@ private:
 		int32_t _downloadId;
 		int32_t _triesLeft;
 		time_t _failureTime;
+		bool _resume;
 		std::string _url;
 		std::string _infoPath;
 		std::string _dataPath;

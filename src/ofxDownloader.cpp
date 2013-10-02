@@ -70,7 +70,7 @@ const char *ofxDownloader::WorkerThread::stateToText(WorkerThreadState state) {
 	}
 }
 
-static const int32_t BufferSize = 100000;
+static const int32_t BufferSize = 10000;
 
 void ofxDownloader::WorkerThread::threadedFunction() {	
 	ofxLogVer("Entering thread #" << _threadId);
@@ -96,10 +96,10 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					sleep(1000);
 				}
 			}
-			if (!_downloader->_resume) {
-				ofxLogVer("Resumed downloads are disabled");
-				ofFile file(_info->_dataPath, ofFile::Reference, true);
-				if (file.exists()) {
+			ofFile file(_info->_dataPath, ofFile::Reference, true);
+			if (file.exists()) {
+				ofxLogVer("Data file " << _info->_dataPath << " exists already");
+				if (!_info->_resume) {
 					ofxLogVer("Removing existing data file " << _info->_dataPath);
 					if (!file.remove()) {
 						ofxLogErr("Error while removing existing data file " << _info->_dataPath <<
@@ -107,6 +107,10 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 						_state = WorkerThreadStateError;
 						continue;
 					}
+				} else {
+					_received = file.getSize();
+					ofxLogVer("Keeping existing data file " << _info->_dataPath << " with " <<
+						_received << " byte(s)");
 				}
 			}
 			ofxLogVer("Opening data file " << _info->_dataPath);
@@ -159,6 +163,12 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			ofxLogVer("Creating HTTP request for " << path);
 			Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path,
 				Poco::Net::HTTPMessage::HTTP_1_1);
+			if (_info->_resume && _received > 0) {
+				ofxLogVer("Adding HTTP range header");
+				ostringstream oss;
+				oss << "bytes=" << _received << "-";
+				request.add("Range", oss.str());
+			}
 			ofxLogVer("Sending HTTP request");
 			try {
 				_session->sendRequest(request);
@@ -182,6 +192,43 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			switch (response.getStatus()) {
 			case Poco::Net::HTTPResponse::HTTP_OK: {
 				ofxLogVer("Received a 200 OK response");
+				if (_info->_resume && _received > 0) {
+					ofxLogErr(host << " failed to resume download #" << _info->_downloadId <<
+						" from " << _info->_url);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				break;
+			}
+			case Poco::Net::HTTPResponse::HTTP_PARTIAL_CONTENT: {
+				ofxLogVer("Received a 206 Partial Content response");
+				if (!_info->_resume || _received == 0) {
+					ofxLogErr("Unexpected partial content from " << host << " for download #" <<
+						_info->_downloadId);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				if (!response.has("Content-Range")) {
+					ofxLogErr("Missing Content-Range header from " << host << " for download #" <<
+						_info->_downloadId);
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
+				ostringstream oss;
+				oss << "bytes " << _received << "-";
+				const std::string &expected = oss.str();
+				const std::string &actual = response.get("Content-Range", "");
+				ofxLogVer("Content-Range header is " << actual);
+				if (actual.size() <= expected.size() || actual.substr(0, expected.size()) != expected) {
+					ofxLogErr("Unexpected Content-Range header from " << host << " for download #" <<
+						_info->_downloadId << " (" << actual << " vs. " << expected << "*)");
+					_info->_resume = false;
+					_state = WorkerThreadStateError;
+					continue;
+				}
 				break;
 			}
 			case Poco::Net::HTTPResponse::HTTP_MOVED_PERMANENTLY:
@@ -189,7 +236,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			case Poco::Net::HTTPResponse::HTTP_SEE_OTHER:
 			case Poco::Net::HTTPResponse::HTTP_TEMPORARY_REDIRECT: {
 				if (!response.has("Location")) {
-					ofxLogErr("HTTP " << response.getStatus() << " redirection without location header "
+					ofxLogErr("HTTP " << response.getStatus() << " redirection without location header"
 						" from " << host << " for download #" << _info->_downloadId);
 					_state = WorkerThreadStateError;
 					continue;
@@ -213,6 +260,23 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			int64_t contentLength = response.getContentLength64();
 			if (contentLength != Poco::Net::HTTPResponse::UNKNOWN_CONTENT_LENGTH) {
 				ofxLogVer("HTTP response has Content-Length header");
+				if (_info->_resume && _received > 0) {
+					ofxLogVer("Adjusting content length of partial content from " << contentLength <<
+						" to " << (contentLength + _received));
+					contentLength += _received;
+					ostringstream oss;
+					oss << "/" << contentLength;
+					const std::string &expected = oss.str();
+					const std::string &actual = response.get("Content-Range", "");
+					if (actual.size() <= expected.size() ||
+						actual.substr(actual.size() - expected.size()) != oss.str()) {
+						ofxLogErr("Unexpected Content-Range header from " << host << " for download #" <<
+							_info->_downloadId << " (" << actual << " vs. *" << expected << ")");
+						_info->_resume = false;
+						_state = WorkerThreadStateError;
+						continue;
+					}
+				}
 				if (_info->_length < 0) {
 					ofxLogVer("Accepting content length " << contentLength << " from " << host <<
 						" for download #" << _info->_downloadId);
@@ -228,7 +292,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 				ofxLogVer("HTTP response without Content-Length header");
 				if (_info->_length < 0 && _info->_md5Digest.empty()) {
 					ofxLogErr("HTTP response from " << host << " without Content-Length header for "
-						"download  #" << _info->_downloadId << " without known length or MD5 digest");
+						"download #" << _info->_downloadId << " without known length or MD5 digest");
 					_state = WorkerThreadStateError;
 					continue;
 				}
@@ -320,6 +384,15 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 							_downloader->_maxTries - _info->_triesLeft);
 					_downloader->postponePendingDownload(_info);
 				} else {
+					if (dataFile.is_open()) {
+						ofxLogVer("Closing data file");
+						dataFile.close();
+					}
+					ofxLogVer("Removing info and data files");
+					if (!ofFile::removeFile(_info->_infoPath, false))
+						ofxLogErr("Error while removing info file " << _info->_infoPath);
+					if (!ofFile::removeFile(_info->_dataPath, false))
+						ofxLogErr("Error while removing data file " << _info->_dataPath);
 					if (_downloader->_callback != 0)
 						_downloader->_callback(_downloader->_opaque, DownloadStatusGivingUp,
 							_info->_downloadId, _received, _info->_length,
@@ -559,6 +632,7 @@ bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &dow
 		tmpIds.push_back(info._downloadId);
 		info._triesLeft = _maxTries;
 		info._failureTime = 0;
+		info._resume = _resume;
 		const std::string &path = dir.getPath(i);
 		if (!info.readFromFile(path)) {
 			ofxLogErr("Error while loading info file " << path);
@@ -662,6 +736,7 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	info._downloadId = ++_downloadId;
 	info._triesLeft = _maxTries;
 	info._failureTime = 0;
+	info._resume = _resume;
 	info._url = url;
 	info._infoPath = infoPath;
 	info._dataPath = dataPath;
