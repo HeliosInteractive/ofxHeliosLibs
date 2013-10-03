@@ -368,11 +368,15 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 			} else {
 				ofxLogVer("HTTP response without Content-Length header");
 				if (_info->_length < 0 && _info->_md5Digest.empty()) {
-					ofxLogErr("HTTP response from " << host << " without Content-Length header for "
-						"download #" << _info->_downloadId << " without known length or MD5 digest");
-					_info->_resume = false;
-					_state = WorkerThreadStateError;
-					continue;
+					if (_info->_lenient)
+						ofxLogVer("Accepting HTTP response for lenient download #" << _info->_downloadId);
+					else {
+						ofxLogErr("HTTP response from " << host << " without Content-Length header for "
+							"download #" << _info->_downloadId << " without known length or MD5 digest");
+						_info->_resume = false;
+						_state = WorkerThreadStateError;
+						continue;
+					}
 				}
 			}
 			_session->socket().setReceiveTimeout(_downloader->_downloadTimeout * 1000 * 1000);
@@ -421,7 +425,8 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 					// resume
 					_state = WorkerThreadStateError;
 					continue;
-				} else if (_info->_md5Digest.size() > 0) {
+				}
+				if (_info->_md5Digest.size() > 0) {
 					uint8_t md5Result[16];
 					MD5_Final(md5Result, &_md5Context);
 					const std::string &digest = md5ToString(md5Result);
@@ -436,7 +441,10 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 						continue;
 					}
 				}
-				ofxLogVer("Download #" << _info->_downloadId << " passed length and MD5 digest checks");
+				if (_info->_lenient)
+					ofxLogVer("Accepting lenient download #" << _info->_downloadId);
+				else
+					ofxLogVer("Download #" << _info->_downloadId << " passed length and MD5 digest checks");
 				_state = WorkerThreadStatePersist;
 			}
 			break;
@@ -444,7 +452,7 @@ void ofxDownloader::WorkerThread::threadedFunction() {
 		case WorkerThreadStatePersist: {
 			ofxLogVer("Persisting download #" << _info->_downloadId << " to " << _info->_filePath);
 			dataFile.close();
-			if (_downloader->_overwrite) {
+			if (_downloader->_overwrite && ofFile::doesFileExist(_info->_filePath, false)) {
 				ofxLogVer("Overwriting existing file");
 				ofFile::removeFile(_info->_filePath, false);
 			}
@@ -706,9 +714,9 @@ bool ofxDownloader::validateFile(const std::string &filePath) {
 	return true;
 }
 
-bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &downloadDir,
-	int32_t maxThreads, int32_t maxTries, int32_t retryDelay, bool resume, bool overwrite,
-	int32_t connectTimeout, int32_t downloadTimeout, DownloadCallback callback, void *opaque) {
+bool ofxDownloader::initialize(const std::string &downloadDir, int32_t maxThreads, int32_t maxTries,
+	int32_t retryDelay, bool resume, bool overwrite, int32_t connectTimeout, int32_t downloadTimeout,
+	DownloadCallback callback, void *opaque) {
 	ofxLogVer("Initializing downloader");
 	if (_initialized) {
 		ofxLogErr("Downloader already initialized");
@@ -736,16 +744,31 @@ bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &dow
 	_pendingDownloads.clear();
 	_runningThreads.clear();
 	_buriedThreads.clear();
+	_initialized = true;
+	return true;
+}
+
+int32_t ofxDownloader::howManyRecoverable() {
+	ofxLogVer("Counting info files in " << _downloadDir);
+	ofDirectory dir(_downloadDir);
 	dir.allowExt(INFO_EXTENSION);
 	int32_t count = dir.listDir();
-	ofxLogVer("Found " << count << " info file(s) in " << downloadDir);
-	std::vector<int32_t> tmpIds;
+	ofxLogVer("Found " << count << " info file(s)");
+	return count;
+}
+
+bool ofxDownloader::recoverDownloads(std::vector<RecoveredDownload> &recovered) {
+	ofxLogVer("Recovering downloads from " << _downloadDir);
+	ofDirectory dir(_downloadDir);
+	dir.allowExt(INFO_EXTENSION);
+	int32_t count = dir.listDir();
+	ofxLogVer("Found " << count << " info file(s) in " << _downloadDir);
+	std::vector<RecoveredDownload> tmpRecovered;
 	for (int32_t i = 0; i < count; i++) {
 		DownloadInfo info;
 		info._threadId = -1;
 		info._available = true;
 		info._downloadId = ++_downloadId;
-		tmpIds.push_back(info._downloadId);
 		info._triesLeft = _maxTries;
 		info._failureTime = 0;
 		info._resume = _resume;
@@ -759,10 +782,11 @@ bool ofxDownloader::initialize(std::vector<int32_t> &ids, const std::string &dow
 			return false;
 		}
 		queuePendingDownload(info);
+		tmpRecovered.push_back(RecoveredDownload(info._downloadId, info._url, info._fileName,
+			info._length, info._md5Digest));
 		startWorkerThread();
 	}
-	ids = tmpIds;
-	_initialized = true;
+	recovered = tmpRecovered;
 	return true;
 }
 
@@ -774,12 +798,14 @@ bool ofxDownloader::DownloadInfo::writeToFile(const std::string &path) {
 		return false;
 	}
 	file << _url << std::endl;
+	file << _fileName << std::endl;
 	file << _infoPath << std::endl;
 	file << _dataPath << std::endl;
 	file << _hashPath << std::endl;
 	file << _filePath << std::endl;
 	file << _length << std::endl;
 	file << _md5Digest << std::endl;
+	file << _lenient << std::endl;
 	if (!file.good()) {
 		ofxLogErr("Error while writing to info file " << path);
 		return false;
@@ -795,18 +821,26 @@ bool ofxDownloader::DownloadInfo::readFromFile(const std::string &path) {
 		return false;
 	}
 	std::getline(file, _url);
+	std::getline(file, _fileName);
 	std::getline(file, _infoPath);
 	std::getline(file, _dataPath);
 	std::getline(file, _hashPath);
 	std::getline(file, _filePath);
 	std::string length;
 	std::getline(file, length);
-	std::istringstream iss(length);
-	if (!(iss >> _length)) {
+	std::istringstream lengthIss(length);
+	if (!(lengthIss >> _length)) {
 		ofxLogErr("Invalid length in info file " << path);
 		return false;
 	}
 	std::getline(file, _md5Digest);
+	std::string lenient;
+	std::getline(file, lenient);
+	std::istringstream lenientIss(lenient);
+	if (!(lenientIss >> _lenient)) {
+		ofxLogErr("Invalid lenient flag in info file " << path);
+		return false;
+	}
 	if (!file.good()) {
 		ofxLogErr("Error while reading from info file " << path);
 		return false;
@@ -815,7 +849,7 @@ bool ofxDownloader::DownloadInfo::readFromFile(const std::string &path) {
 }
 
 bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::string &fileName,
-	int64_t length, const std::string &md5Digest) {
+	int64_t length, const std::string &md5Digest, bool lenient) {
 	ofxLogVer("Adding download from " << url);
 	if (!_initialized) {
 		ofxLogErr("Downloader not initialized");
@@ -867,12 +901,14 @@ bool ofxDownloader::addDownload(int32_t &id, const std::string &url, const std::
 	info._failureTime = 0;
 	info._resume = _resume;
 	info._url = url;
+	info._fileName = fileName;
 	info._infoPath = infoPath;
 	info._dataPath = dataPath;
 	info._hashPath = hashPath;
 	info._filePath = filePath;
 	info._length = length;
 	info._md5Digest = md5Digest;
+	info._lenient = lenient;
 	std::transform(info._md5Digest.begin(), info._md5Digest.end(), info._md5Digest.begin(), ::tolower);
 	if (!info.writeToFile(infoPath)) {
 		ofxLogErr("Error while storing info file " << infoPath);

@@ -31,7 +31,7 @@ public:
 	};
 
 	typedef bool (*DownloadCallback)(void *opaque, DownloadStatus status, int32_t id,
-		int64_t length, int64_t total, int32_t tries);
+		int64_t length, int64_t total, int32_t attempt);
 
 private:
 	friend class WorkerThread;
@@ -45,12 +45,14 @@ private:
 		time_t _failureTime;
 		bool _resume;
 		std::string _url;
+		std::string _fileName;
 		std::string _infoPath;
 		std::string _dataPath;
 		std::string _hashPath;
 		std::string _filePath;
 		int64_t _length;
 		std::string _md5Digest;
+		bool _lenient;
 
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
@@ -131,14 +133,28 @@ private:
 	bool stopDownload(int32_t id, std::string &infoPath, std::string &dataPath, std::string &hashPath);
 
 public:
+	struct RecoveredDownload {
+		int32_t _id;
+		std::string _url;
+		std::string _fileName;
+		int64_t _length;
+		std::string _md5Digest;
+
+		RecoveredDownload(int32_t id, const std::string &url, const std::string &fileName,
+			int64_t length, const std::string &md5Digest): _id(id), _url(url), _fileName(fileName),
+			_length(length), _md5Digest(md5Digest) {}
+	};
+
 	ofxDownloader(): _threadId(0), _downloadId(0), _startTime(time(0)), _initialized(false),
 		_unavailable(0) {}
-	bool initialize(std::vector<int32_t> &ids, const std::string &downloadDir, int32_t maxThreads = 3,
-		int32_t maxTries = 3, int32_t retryDelay = 10, bool resume = true, bool overwrite = false,
+	bool initialize(const std::string &downloadDir, int32_t maxThreads = 3, int32_t maxTries = 3,
+		int32_t retryDelay = 10, bool resume = true, bool overwrite = false,
 		int32_t connectTimeout = ConnectTimeout, int32_t downloadTimeout = DownloadTimeout,
 		DownloadCallback callback = 0, void *opaque = 0);
+	int32_t howManyRecoverable();
+	bool recoverDownloads(std::vector<RecoveredDownload> &recovered);
 	bool addDownload(int32_t &id, const std::string &url, const std::string &fileName = "",
-		int64_t length = -1, const std::string &md5Digest = "");
+		int64_t length = -1, const std::string &md5Digest = "", bool lenient = false);
 	const char *statusToText(DownloadStatus status);
 	bool stopDownload(int32_t id);
 	bool cancelDownload(int32_t id);
