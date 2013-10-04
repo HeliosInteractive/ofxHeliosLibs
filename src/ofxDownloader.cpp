@@ -750,6 +750,10 @@ bool ofxDownloader::initialize(const std::string &downloadDir, int32_t maxThread
 
 int32_t ofxDownloader::howManyRecoverable() {
 	ofxLogVer("Counting info files in " << _downloadDir);
+	if (!_initialized) {
+		ofxLogErr("Downloader not initialized");
+		return false;
+	}
 	ofDirectory dir(_downloadDir);
 	dir.allowExt(INFO_EXTENSION);
 	int32_t count = dir.listDir();
@@ -759,6 +763,10 @@ int32_t ofxDownloader::howManyRecoverable() {
 
 bool ofxDownloader::recoverDownloads(std::vector<RecoveredDownload> &recovered) {
 	ofxLogVer("Recovering downloads from " << _downloadDir);
+	if (!_initialized) {
+		ofxLogErr("Downloader not initialized");
+		return false;
+	}
 	ofDirectory dir(_downloadDir);
 	dir.allowExt(INFO_EXTENSION);
 	int32_t count = dir.listDir();
