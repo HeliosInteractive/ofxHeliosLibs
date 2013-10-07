@@ -6,6 +6,7 @@ static const std::string INFO_EXTENSION(".dif");
 static const std::string DATA_EXTENSION(".ddf");
 static const std::string HASH_EXTENSION(".dhf");
 static const size_t INFO_LENGTH = FILE_PREFIX.size() + 32 + INFO_EXTENSION.size();
+int32_t ofxSync::_refCount = 0;
 
 static const std::string makeInfoFileName(const std::string &suffix) {
 	return FILE_PREFIX + suffix + INFO_EXTENSION;
@@ -31,8 +32,9 @@ static const std::string urlToFileName(const std::string &url) {
 			")");
 		return "";
 	}
-	if (scheme != "http") {
-		ofxLogErr("URL " << url << " with scheme " << scheme << " is not a HTTP URL");
+	std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
+	if (scheme != "http" && scheme != "https") {
+		ofxLogErr("URL " << url << " with scheme " << scheme << " is not a HTTP(S) URL");
 		return "";
 	}
 	size_t off = path.rfind('/');
@@ -291,16 +293,22 @@ bool ofxSync::SyncThread::stateClaim(bool &resume) {
 
 bool ofxSync::SyncThread::stateConnect(bool &resume) {
 	ofxLogVer("Connecting sync record " << _record->_fileName << " to " << _record->_url);
-	std::string host, path;
+	std::string scheme, host, path;
 	int32_t port;
 	try {
 		Poco::URI uri(_record->_url);
+		scheme = uri.getScheme();
 		host = uri.getHost();
 		path = uri.getPathAndQuery();
 		port = uri.getPort();
 	} catch (Poco::Exception &ex) {
 		ofxLogErr("Error while parsing URL " << _record->_url << " for sync record " <<
 			_record->_fileName << ": " << ex.name() << " (" << ex.message() << ")");
+		return false;
+	}
+	std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
+	if (scheme != "http" && scheme != "https") {
+		ofxLogErr("Invalid URL scheme " << scheme);
 		return false;
 	}
 	ofxLogVer("Resolving server DNS name " << host);
@@ -314,8 +322,16 @@ bool ofxSync::SyncThread::stateConnect(bool &resume) {
 		resume = true;
 		return false;
 	}
-	ofxLogVer("Initializing HTTP session with " << ipAddress.toString() << ":" << port);
-	_session = new Poco::Net::HTTPClientSession();
+	ofxLogVer("Initializing HTTP(S) session with " << ipAddress.toString() << ":" << port);
+	try {
+		_session = port != 443 ?
+			new Poco::Net::HTTPClientSession() :
+			new Poco::Net::HTTPSClientSession();
+	} catch (Poco::Exception &ex) {
+		ofxLogErr("Error while initializing HTTP(S) session: " << ex.name() << " (" << ex.message() <<
+			")");
+		return false;
+	}
 	_session->setHost(host);
 	_session->setPort(port);
 	_session->setKeepAlive(false);
@@ -639,6 +655,7 @@ void ofxSync::SyncThread::threadedFunction() {
 		_sync->startThreadsLocked();
 	} else
 		ofxLogVer("Not touching thread info during shutdown");
+	ERR_remove_thread_state(0);
 	ofxLogVer("Leaving thread " << _threadId);
 }
 
@@ -773,6 +790,18 @@ bool ofxSync::initialize(const std::string &cacheDir) {
 	if (_init) {
 		ofxLogErr("Already initialized");
 		return false;
+	}
+	if (++_refCount == 1) {
+		ofxLogVer("Initializing SSL subsystem");
+		try {
+			Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
+				"", Poco::Net::Context::VERIFY_RELAXED, 9, true);
+			Poco::Net::SSLManager::instance().initializeClient(0, 0, context);
+		} catch (Poco::Exception &ex) {
+			ofxLogErr("Error while initializing SSL subsystem: " << ex.name() << " (" <<
+				ex.message() << ")");
+			return false;
+		}
 	}
 	ofDirectory dir(cacheDir);
 	if (!dir.exists()) {
@@ -1016,6 +1045,21 @@ bool ofxSync::shutDown() {
 	ofxScopeMutex m(_mutex);
 	stopThreadsLocked();
 	zombieSlayerLocked(true);
+	// otherwise POCO's OpenSSLInitializer's mutex may be destructed
+	// before Context, leading to an exception on program exit
+	if (--_refCount == 0) {
+		ofxLogVer("Shutting down SSL subsystem");
+		try {
+			Poco::Net::SSLManager::instance().shutdown();
+		} catch (Poco::Exception &ex) {
+			ofxLogErr("Error while shutting down SSL subsystem: " << ex.name() << " (" <<
+				ex.message() << ")");
+		}
+		ENGINE_cleanup();
+		CONF_modules_free();
+		COMP_zlib_cleanup();
+		CRYPTO_cleanup_all_ex_data();
+	}
 	_init = false;
 	return true;
 }

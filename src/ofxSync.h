@@ -10,12 +10,16 @@
 #include <climits>
 #include <ofMain.h>
 #include <Poco/DigestEngine.h>
+#include <Poco/Net/SSLManager.h>
 #include <Poco/Net/HTTPClientSession.h>
+#include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
 #include <Poco/Net/DNS.h>
 #include <Poco/URI.h>
 #include <Poco/Exception.h>
+#include <openssl/engine.h>
+#include <openssl/conf.h>
 #include "ofxAtomicLog.h"
 #include "ofxScopeMutex.h"
 #include "md5.h"
@@ -149,6 +153,7 @@ private:
 	static const bool DEFAULT_REMOVE = true;
 	static const bool DEFAULT_RETRY = true;
 
+	static int32_t _refCount;
 	bool _init;
 	ofMutex _mutex;
 	int32_t _threadId;
