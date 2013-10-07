@@ -37,18 +37,26 @@ void ofxLoadingManager::setup (  string _localSavePath )
 	ofRegisterURLNotification( this ) ;
 	ofAddListener( LoadingEvents::Instance()->FILE_LOADED , this, &ofxLoadingManager::loadCompleteHandler ); 
 	
+
 	for ( int i = 0 ; i < numFileSavers ; i++ ) 
 	{
 		ofAddListener( fileSavers[i]->timeoutTimer.TIMER_COMPLETE , this , &ofxLoadingManager::timerCompleteHandler ) ; 
 	//	fileSavers[i]->update() ;  
 	}
+
+	checkFileLoopTimer.setup( 5000 , "checkFileLoopTimer" ) ;
+	ofAddListener( checkFileLoopTimer.TIMER_COMPLETE , this , &ofxLoadingManager::checkFileLoopComplete ) ; 
 }
+
+
 
 void ofxLoadingManager::update ( ) 
 {
+
 	//cacheDataQueue.push_back( asyncLoadData[ asyncDataIndex ] ) ;
 	//removeAsyncDataFromQueue( asyncLoadData[ asyncDataIndex ] ) ; 
-	
+	checkFileLoopTimer.update() ; 
+
 	for ( int i = 0 ; i < numFileSavers ; i++ ) 
 	{
 		fileSavers[i]->update() ;  
@@ -62,16 +70,6 @@ void ofxLoadingManager::draw ( )
 	int y = 20 ; 
 
 	ofSetColor( 35 ) ; 
-	/*
-	r 21 , 
-	g , 65 , 
-	b = 147 
-
-	lighyt blue
-	r 0
-	g 179
-	b 221
-	*/
 	ofColor color = ofColor( 0 , 179 , 221 ) ; 
 
 	ofSetColor( color ) ; 
@@ -116,7 +114,90 @@ void ofxLoadingManager::draw ( )
 	ofPopMatrix() ; 
 }
 
-void ofxLoadingManager::loadURL( string _url ) 
+void ofxLoadingManager::setupLoadingDirectory ( string loadDirPath ) 
+{
+	loadDirectoryPath = loadDirPath ; 
+}
+
+
+void ofxLoadingManager::checkFileLoopComplete ( int &args )  
+{
+	int count = 0 ; 
+	bool bAdd = false ; 
+	vector< ofxAsyncLoadingData > :: iterator d ; 
+	for ( d = asyncLoadData.begin() ; d != asyncLoadData.end() ; d++ ) 
+	{
+			//cout << " w : " << (*threadedQueueImageRefs[ count ]).getWidth() << " , h : " << (*threadedQueueImageRefs[ count ]).getHeight() << endl ; 
+			bAdd = addToThreadedImageQueue( (*threadedQueueImageRefs[ count ]) , (*d).url , false ) ; 
+			//cout << "ATTEMPTING TO ADD : " << (*d).url << endl ; 
+			if ( bAdd == true ) 
+			{
+				cout << "it now exists ! LOADING" << endl ;
+				d = asyncLoadData.erase( d ) ; 
+				return ; 
+			}
+		
+		count ++ ; 
+	}
+
+
+	int refCount = 0 ; 
+	vector< ofImage * > :: iterator ref ; 
+	for ( ref = threadedQueueImageRefs.begin() ; ref != threadedQueueImageRefs.end() ; ref++ ) 
+	{
+
+		if ( bAdd == true && refCount == count ) 
+		{
+			ref = threadedQueueImageRefs.erase( ref ) ; 
+		}
+		refCount++ ; 
+	}
+}
+
+
+//There's a WAY better way to implement this.
+bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path , bool bAddToQueue ) 
+{
+
+	string localString = loadDirectoryPath + remoteUrlToLocal( path ) ; 
+
+	bool bBinary = checkFileExtensionForBinary( path  ) ; 
+	ofFile checkIfItLocallyExists ; //ofFile(localString,ofFile::ReadOnly , bBinary ) ;  
+	bool bExists = checkIfItLocallyExists.doesFileExist( localString , true ) ; 
+
+	stringstream ss ; 
+
+	ofxAsyncLoadingData data ; 
+	data.setup( localString , generateUniqueId() , bBinary ) ; 
+	if ( bExists ) 
+	{
+		ss << "'" << localString << "'" << " already exists ! loading now" << endl ; 
+		ofLogVerbose( ss.str() ) ;
+
+		//TODO do local things and notify that the file is ready to be loaded.
+		threadedLoader.loadFromDisk( image , data.url ) ;  
+		
+		return true  ; 
+	}
+	else
+	{
+		ss << "bAddToQueue :" << bAddToQueue << "  - '" << localString << "' does not exist, adding to the load queue" << endl ; 
+		ofLogVerbose( ss.str() ) ;
+		if ( bAddToQueue == true ) 
+		{
+			threadedQueueImageRefs.push_back( &image ); 
+			asyncLoadData.push_back( data ) ; 
+			checkFileLoopTimer.start( true , false ) ; 
+		}
+		
+		return false ; 
+	}
+	
+	 
+
+}
+
+void ofxLoadingManager::loadURL( string _url   ) 
 {
 	string localString = remoteUrlToLocal( _url ) ; 
 
@@ -248,15 +329,15 @@ bool ofxLoadingManager::checkFileExtensionForBinary( string filePath )
 	string fileExtension = ofToLower( filePath.substr( index + 1 ) ) ; 
 
 	stringstream ss ; 
-	ss << "filePath : " << filePath << endl ;
-	ss << "file extension : " << fileExtension << endl ;
+	//ss << "filePath : " << filePath << endl ;
+	//ss << "file extension : " << fileExtension << endl ;
 	
 	for ( int i = 0 ; i < textFileExtensions.size() ; i++ ) 
 	{
 		if ( fileExtension.compare( textFileExtensions[i] ) == 0 ) 
 		{
-			ss << "filePath is : " << textFileExtensions[i] << " is a TEXT file" << endl ; 
-			ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
+			//ss << "filePath is : " << textFileExtensions[i] << " is a TEXT file" << endl ; 
+			//ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
 			return false ; 
 		}
 	}
@@ -265,14 +346,14 @@ bool ofxLoadingManager::checkFileExtensionForBinary( string filePath )
 	{
 		if ( fileExtension.compare( binaryFileExtensions[i] ) == 0 ) 
 		{
-			ss << "filePath is : " << binaryFileExtensions[i] << " is a BINARY file" << endl ; 
-			ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
+			//ss << "filePath is : " << binaryFileExtensions[i] << " is a BINARY file" << endl ; 
+			//ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
 			return true ; 
 		}
 	}
 
-	ss << "file type '" << fileExtension << "' not found. Assuming it's a binary file." << endl ; 
-	ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
+	//ss << "file type '" << fileExtension << "' not found. Assuming it's a binary file." << endl ; 
+	//ofLog( OF_LOG_VERBOSE , ss.str() ) ; 
 	return true ; 
 }
 	

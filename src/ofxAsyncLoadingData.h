@@ -5,7 +5,10 @@
 class ofxAsyncLoadingData
 {
     public:
-		ofxAsyncLoadingData() { } 
+		ofxAsyncLoadingData()
+		{ 
+			
+		} 
 		~ofxAsyncLoadingData() { } 
 
         void setup ( string _url , int _uniqueId, bool _bBinaryFile ) ; 
