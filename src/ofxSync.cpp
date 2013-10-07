@@ -794,8 +794,10 @@ bool ofxSync::initialize(const std::string &cacheDir) {
 	if (++_refCount == 1) {
 		ofxLogVer("Initializing SSL subsystem");
 		try {
+			// skip host name verification. POCO uses the result of a reverse
+			// DNS lookup as the host name, which sometimes breaks things.
 			Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
-				"", Poco::Net::Context::VERIFY_RELAXED, 9, true);
+				"", Poco::Net::Context::VERIFY_NONE, 9, true);
 			Poco::Net::SSLManager::instance().initializeClient(0, 0, context);
 		} catch (Poco::Exception &ex) {
 			ofxLogErr("Error while initializing SSL subsystem: " << ex.name() << " (" <<
