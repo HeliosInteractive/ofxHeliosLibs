@@ -784,44 +784,18 @@ void ofxSync::zombieSlayer(bool shutdown) {
 	zombieSlayerLocked(shutdown);
 }
 
-bool ofxSync::initialize(const std::string &cacheDir) {
-	ofxLogVer("Initializing");
-	assert(sizeof (MD5_CTX) == sizeof (Md5Context));
-	if (_init) {
-		ofxLogErr("Already initialized");
+bool ofxSync::reload() {
+	ofxLogVer("Reloading cache directory " << _cacheDir);
+	if (!_init) {
+		ofxLogErr("Not initialized");
 		return false;
 	}
-	if (++_refCount == 1) {
-		ofxLogVer("Initializing SSL subsystem");
-		try {
-			// skip host name verification. POCO uses the result of a reverse
-			// DNS lookup as the host name, which sometimes breaks things.
-			Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
-				"", Poco::Net::Context::VERIFY_NONE, 9, true);
-			Poco::Net::SSLManager::instance().initializeClient(0, 0, context);
-		} catch (Poco::Exception &ex) {
-			ofxLogErr("Error while initializing SSL subsystem: " << ex.name() << " (" <<
-				ex.message() << ")");
-			return false;
-		}
-	}
-	ofDirectory dir(cacheDir);
-	if (!dir.exists()) {
-		ofxLogErr("Cache directory " << cacheDir << " does not exist");
-		return false;
-	}
-	if (!dir.isDirectory()) {
-		ofxLogErr("Cache directory " << cacheDir << " is not a directory");
-		return false;
-	}
-	_cacheDir = cacheDir;
 	_recordMap.clear();
 	_recordQueue.clear();
-	_livingThreads.clear();
-	_zombieThreads.clear();
+	ofDirectory dir(_cacheDir);
 	int32_t count = dir.listDir();
 	bool result = true;
-	ofxLogVer("Found " << count << " file(s) in " << _cacheDir);
+	ofxLogVer("Found " << count << " file(s)");
 	for (int32_t i = 0; i < count; i++) {
 		const std::string &path = dir.getPath(i);
 		if (path.size() > INFO_LENGTH && path.substr(path.size() - INFO_LENGTH,
@@ -864,10 +838,46 @@ bool ofxSync::initialize(const std::string &cacheDir) {
 			continue;
 		}
 		_recordQueue.push_back(&res.first->second);
-		ofxLogVer("Added sync record for file: " << res.first->second.toString());
+		ofxLogVer("Added sync record for file: " << res.first->second.toString());	
 	}
-	_init = true;
 	return result;
+}
+
+bool ofxSync::initialize(const std::string &cacheDir) {
+	ofxLogVer("Initializing");
+	assert(sizeof (MD5_CTX) == sizeof (Md5Context));
+	if (_init) {
+		ofxLogErr("Already initialized");
+		return false;
+	}
+	if (++_refCount == 1) {
+		ofxLogVer("Initializing SSL subsystem");
+		try {
+			// skip host name verification. POCO uses the result of a reverse
+			// DNS lookup as the host name, which sometimes breaks things.
+			Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
+				"", Poco::Net::Context::VERIFY_NONE, 9, true);
+			Poco::Net::SSLManager::instance().initializeClient(0, 0, context);
+		} catch (Poco::Exception &ex) {
+			ofxLogErr("Error while initializing SSL subsystem: " << ex.name() << " (" <<
+				ex.message() << ")");
+			return false;
+		}
+	}
+	ofDirectory dir(cacheDir);
+	if (!dir.exists()) {
+		ofxLogErr("Cache directory " << cacheDir << " does not exist");
+		return false;
+	}
+	if (!dir.isDirectory()) {
+		ofxLogErr("Cache directory " << cacheDir << " is not a directory");
+		return false;
+	}
+	_cacheDir = cacheDir;
+	_livingThreads.clear();
+	_zombieThreads.clear();
+	_init = true;
+	return reload();
 }
 
 const char *ofxSync::statusToText(SyncStatus status) {

@@ -192,6 +192,7 @@ public:
 		_connectTimeout(DEFAULT_CONNECT_TIMEOUT), _transferTimeout(DEFAULT_TRANSFER_TIMEOUT),
 		_remove(DEFAULT_REMOVE), _retry(DEFAULT_RETRY), _callback(0), _opaque(0) {}
 	bool initialize(const std::string &cacheDir);
+	bool reload();
 	void setMaxThreads(int32_t maxThreads);
 	void setTimeouts(int32_t connectTimeout, int32_t transferTimeout);
 	void setRemove(bool remove);
