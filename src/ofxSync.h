@@ -15,6 +15,7 @@
 #include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
+#include <Poco/Net/PrivateKeyPassphraseHandler.h>
 #include <Poco/Net/DNS.h>
 #include <Poco/URI.h>
 #include <Poco/Exception.h>

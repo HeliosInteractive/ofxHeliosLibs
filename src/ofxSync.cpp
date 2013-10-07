@@ -585,6 +585,7 @@ void ofxSync::SyncThread::stateError(bool resume) {
 			_dataFile = 0;
 		}
 		_sync->releaseSyncRecord(_record, !_sync->_retry);
+		_record = 0;
 	}
 	_state = SyncThreadStateExit;
 }
@@ -600,6 +601,7 @@ void ofxSync::SyncThread::stateComplete() {
 		_sync->_callback(_sync->_opaque, SyncStatusComplete, _threadId, _received, _record->_length,
 			_record->_attempt + 1);
 	_sync->releaseSyncRecord(_record, false);
+	_record = 0;
 	_state = SyncThreadStateExit;
 }
 
@@ -655,6 +657,10 @@ void ofxSync::SyncThread::threadedFunction() {
 		_sync->startThreadsLocked();
 	} else
 		ofxLogVer("Not touching thread info during shutdown");
+	if (_record != 0) {
+		ofxLogVer("Force-releasing sync record " << _record->toString());
+		_record->_threadId = -1;
+	}
 	ERR_remove_thread_state(0);
 	ofxLogVer("Leaving thread " << _threadId);
 }
@@ -731,18 +737,21 @@ void ofxSync::startThreadsLocked() {
 
 void ofxSync::stopThreadsLocked() {
 	ofxLogVer("Stopping threads");
+	for (ThreadList::iterator it = _livingThreads.begin(); it != _livingThreads.end(); it++) {
+		ofxLogVer("Stopping thread " << (*it)->_threadId);
+		(*it)->stopThread();
+	}
 	while (_livingThreads.size() > 0) {
 		SyncThread *thread = _livingThreads.front();
 		_livingThreads.pop_front();
-		ofxLogVer("Stopping thread " << thread->_threadId);
-		thread->stopThread();
+		ofxLogVer("Waiting for thread " << thread->_threadId);
 		_mutex.unlock();
 		// waitForThread() doesn't join, if the thread is not running anymore,
 		// which leads to a pthread resource leak
 		thread->getPocoThread().tryJoin(10 * 1000);
 		thread->waitForThread();
 		_mutex.lock();
-		ofxLogVer("Thread " << thread->_threadId << " stopped");
+		ofxLogVer("Waited for thread " << thread->_threadId);
 		delete thread;
 	}
 	ofxLogVer("Threads stopped");
