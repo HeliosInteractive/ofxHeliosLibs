@@ -29,7 +29,7 @@ public:
 		SyncStatusComplete
 	};
 
-	typedef bool (*SyncCallback)(void *opaque, SyncStatus status, int32_t id,
+	typedef void (*SyncCallback)(void *opaque, SyncStatus status, int32_t id,
 		int64_t length, int64_t total, int32_t attempt);
 
 	class FileInfo {
@@ -46,7 +46,7 @@ public:
 			_md5Digest(md5Digest) {}
 		FileInfo(const FileInfo &other): _url(other._url), _fileName(other._fileName),
 			_length(other._length), _md5Digest(other._md5Digest) {}
-		std::string toString();
+		std::string toString() const;
 	};
 
 	typedef std::map<std::string, FileInfo> FileMap;
@@ -81,7 +81,7 @@ private:
 			_lenient(false) {}
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
-		std::string toString();
+		std::string toString() const;
 	};
 
 	class Md5Context: public MD5_CTX {
@@ -146,6 +146,8 @@ private:
 	static const int32_t DEFAULT_MAX_THREADS = 3;
 	static const int32_t DEFAULT_CONNECT_TIMEOUT = 20;
 	static const int32_t DEFAULT_TRANSFER_TIMEOUT = 60;
+	static const bool DEFAULT_REMOVE = false;
+	static const bool DEFAULT_RETRY = true;
 
 	bool _init;
 	ofMutex _mutex;
@@ -156,6 +158,7 @@ private:
 	int32_t _connectTimeout;
 	int32_t _transferTimeout;
 	bool _remove;
+	bool _retry;
 	SyncCallback _callback;
 	void *_opaque;
 
@@ -172,7 +175,7 @@ private:
 	ThreadList _zombieThreads;
 
 	SyncRecord *claimSyncRecord(int32_t threadId);
-	bool releaseSyncRecord(const SyncRecord *record);
+	bool releaseSyncRecord(const SyncRecord *record, bool remove);
 	void startThreadsLocked();
 	void stopThreadsLocked();
 	void threadDoneLocked(int32_t threadId);
@@ -182,12 +185,13 @@ private:
 public:
 	ofxSync(): _init(false), _threadId(0), _startTime(time(0)), _maxThreads(DEFAULT_MAX_THREADS),
 		_connectTimeout(DEFAULT_CONNECT_TIMEOUT), _transferTimeout(DEFAULT_TRANSFER_TIMEOUT),
-		_callback(0), _opaque(0) {}
+		_remove(DEFAULT_REMOVE), _retry(DEFAULT_RETRY), _callback(0), _opaque(0) {}
 	bool initialize(const std::string &cacheDir);
 	void setMaxThreads(int32_t maxThreads);
 	void setTimeouts(int32_t connectTimeout, int32_t transferTimeout);
 	void setRemove(bool remove);
-	void setCallback(SyncCallback, void *opaque);
+	void setRetry(bool retry);
+	void setCallback(SyncCallback callback, void *opaque);
 	const char *statusToText(SyncStatus status);
 	bool synchronize(FileList files, bool lenient = false);
 	bool shutDown();

@@ -45,14 +45,14 @@ static const std::string urlToFileName(const std::string &url) {
 	return path.substr(off + 1, path.size() - off - 1);
 }
 
-std::string ofxSync::FileInfo::toString() {
+std::string ofxSync::FileInfo::toString() const {
 	ostringstream oss;
 	oss << "[URL " << _url << ", file name " << _fileName << ", length " << _length <<
 		", MD5 digest " << _md5Digest << "]";
 	return oss.str();
 }
 
-std::string ofxSync::SyncRecord::toString() {
+std::string ofxSync::SyncRecord::toString() const {
 	ostringstream oss;
 	oss << FileInfo::toString() << ", [thread " << _threadId << ", attempt " << _attempt <<
 		", resume " << _resume << ", info file " << _infoPath << ", lenient " << _lenient << "]";
@@ -401,6 +401,7 @@ bool ofxSync::SyncThread::stateConnect(bool &resume) {
 		_record->_url = response["Location"];
 		// POCO's HTTP session doesn't purge the 3xx response's body,
 		// so don't re-use the existing session
+		ofxLogVer("Destroying HTTP session");
 		delete _session;
 		_session = 0;
 		// stay in SyncThreadStateConnect and reconnect with new URL
@@ -525,6 +526,7 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 bool ofxSync::SyncThread::statePersist(bool &resume) {
 	ofxLogVer("Persisting sync record " << _record->_fileName << " with URL " << _record->_url <<
 		" to " << _record->_filePath);
+	ofxLogVer("Destroying data file");
 	delete _dataFile;
 	_dataFile = 0;
 	if (ofFile::doesFileExist(_record->_filePath, false)) {
@@ -555,13 +557,18 @@ void ofxSync::SyncThread::stateError(bool resume) {
 	else {
 		ofxLogErr("Sync record " << _record->_fileName << " with URL " << _record->_url <<
 			" failed on thread " << _threadId);
-		_record->_attempt++;
 		if (!resume && _record->_resume)
 			_record->_resume = false;
 		if (_sync->_callback != 0)
 			_sync->_callback(_sync->_opaque, SyncStatusFailure, _threadId, _received, _record->_length,
 				_record->_attempt + 1);
-		_sync->releaseSyncRecord(_record);
+		_record->_attempt++;
+		if (!_sync->_retry && _dataFile != 0) {
+			ofxLogVer("Destroying data file");
+			delete _dataFile;
+			_dataFile = 0;
+		}
+		_sync->releaseSyncRecord(_record, !_sync->_retry);
 	}
 	_state = SyncThreadStateExit;
 }
@@ -569,7 +576,6 @@ void ofxSync::SyncThread::stateError(bool resume) {
 void ofxSync::SyncThread::stateComplete() {
 	ofxLogNot("Sync record " << _record->_fileName << " with URL " << _record->_url << " " <<
 		"completed on thread " << _threadId);
-	_record->_attempt++;
 	_record->_filePath.clear();
 	_record->_infoPath.clear();
 	_record->_dataPath.clear();
@@ -577,7 +583,7 @@ void ofxSync::SyncThread::stateComplete() {
 	if (_sync->_callback != 0)
 		_sync->_callback(_sync->_opaque, SyncStatusComplete, _threadId, _received, _record->_length,
 			_record->_attempt + 1);
-	_sync->releaseSyncRecord(_record);
+	_sync->releaseSyncRecord(_record, false);
 	_state = SyncThreadStateExit;
 }
 
@@ -651,7 +657,7 @@ ofxSync::SyncRecord *ofxSync::claimSyncRecord(int32_t threadId) {
 	return 0;
 }
 
-bool ofxSync::releaseSyncRecord(const SyncRecord *record) {
+bool ofxSync::releaseSyncRecord(const SyncRecord *record, bool remove) {
 	ofxScopeMutex m(_mutex);
 	int32_t threadId = record->_threadId;
 	ofxLogVer("Thread " << threadId << " releasing sync record " << record->_fileName <<
@@ -659,11 +665,26 @@ bool ofxSync::releaseSyncRecord(const SyncRecord *record) {
 	for (std::list<SyncRecord *>::iterator it = _recordQueue.begin(); it != _recordQueue.end();
 		it++) {
 		if (*it == record) {
-			(*it)->_threadId = -1;
-			// move to the end of the queue
-			_recordQueue.splice(_recordQueue.end(), _recordQueue, it);
-			ofxLogVer("Thread " << threadId << " released sync record " << record->_fileName <<
-				" with URL " << record->_url);
+			const std::string fileName = record->_fileName, url = record->_url;
+			if (remove) {
+				ofxLogVer("Removing sync record");
+				if (!removeFiles(record, true, true, true, true)) {
+					ofxLogErr("Error while removing files for sync record " << record->toString());
+				}
+				_recordQueue.erase(it);
+				if (_recordMap.erase(record->_fileName) < 1) {
+					ofxLogErr("Error while removing sync record " << record->toString());
+				}
+				ofxLogVer("Thread " << threadId << " removed sync record " << fileName <<
+					" with URL " << url);
+			} else {
+				ofxLogVer("Keeping sync record");
+				(*it)->_threadId = -1;
+				// move to the end of the queue
+				_recordQueue.splice(_recordQueue.end(), _recordQueue, it);
+				ofxLogVer("Thread " << threadId << " released sync record " << fileName <<
+					" with URL " << url);
+			}
 			return true;
 		}
 	}
@@ -846,6 +867,14 @@ void ofxSync::setRemove(bool remove) {
 	_remove = remove;
 }
 
+void ofxSync::setRetry(bool retry) {
+	_retry = retry;
+}
+
+void ofxSync::setCallback(SyncCallback callback, void *opaque) {
+	_callback = callback;
+	_opaque = opaque;
+}
 bool ofxSync::synchronize(FileList files, bool lenient) {
 	ofxScopeMutex m(_mutex);
 	ofxLogVer("Synchronizing " << files.size() << " file(s), " << _recordMap.size() <<
