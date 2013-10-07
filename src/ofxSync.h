@@ -146,7 +146,7 @@ private:
 	static const int32_t DEFAULT_MAX_THREADS = 3;
 	static const int32_t DEFAULT_CONNECT_TIMEOUT = 20;
 	static const int32_t DEFAULT_TRANSFER_TIMEOUT = 60;
-	static const bool DEFAULT_REMOVE = false;
+	static const bool DEFAULT_REMOVE = true;
 	static const bool DEFAULT_RETRY = true;
 
 	bool _init;
