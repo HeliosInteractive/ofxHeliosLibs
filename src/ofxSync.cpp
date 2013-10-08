@@ -361,6 +361,8 @@ bool ofxSync::SyncThread::stateConnect(bool &resume) {
 		return false;
 	}
 	ofxLogVer("Initializing HTTP(S) session with " << ipAddress.toString() << ":" << port);
+	// HTTPS requests crash on Windows, disable them for now
+	port = 80;
 	try {
 		_session = port != 443 ?
 			new Poco::Net::HTTPClientSession() :
