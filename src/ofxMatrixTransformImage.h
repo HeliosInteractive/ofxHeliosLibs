@@ -8,14 +8,14 @@ class ofxMatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTrans
 {
 	public :
         bool bInheritAlpha ;
-		ofxMatrixTransformImage ( )
+		ofxMatrixTransformImage ( );
 
-        ~ofxMatrixTransformImage ( )
-		void draw ( )
-		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f )
-        void setImageProperties( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f  ) 
-		void setImagePath ( string path ) 	
-		bool isNewlyLoaded( ) 
+        ~ofxMatrixTransformImage ( );
+		void draw ( );
+		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f );
+        void setImageProperties( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f  ) ;
+		void setImagePath ( string path ) 	;
+		bool isNewlyLoaded( ) ;
 
 
 		bool bLoaded ; 
