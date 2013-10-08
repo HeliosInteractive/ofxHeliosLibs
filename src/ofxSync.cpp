@@ -235,6 +235,45 @@ bool removeFiles(const ofxSync::SyncRecord *record, bool file, bool info, bool d
 	return result;
 }
 
+void ofxSync::SyncThread::runCallback(SyncStatus status, bool lock) {
+	ofxLogVer("Running callback with status " << _sync->statusToText(status));
+	if (lock)
+		_sync->_mutex.lock();
+	int64_t currentLength = 0, totalLength = 0;
+	int32_t currentCount = 0, totalCount = 0;
+	for (RecordList::iterator it = _sync->_recordQueue.begin(); it != _sync->_recordQueue.end();
+		it++) {
+		if (currentLength >= 0) {
+			if ((*it)->_infoPath.empty()) {
+				if ((*it)->_length >= 0)
+					currentLength += (*it)->_length;
+				else
+					currentLength = -1;
+			} else
+				currentLength += (*it)->_received;
+		}
+		if (totalLength >= 0) {
+			if ((*it)->_length >= 0)
+				totalLength += (*it)->_length;
+			else
+				totalLength = -1;
+		}
+		if ((*it)->_infoPath.empty())
+			currentCount++;
+		totalCount++;
+	}
+	if (lock)
+		_sync->_mutex.unlock();
+	int64_t remainingLength = totalLength >= 0 && currentLength >= 0 ?
+		totalLength - currentLength : -1;
+	ofxLogVer("Count = " << totalCount << ", remaining = " << (totalCount - currentCount) <<
+		", length = " << totalLength << ", remaining = " << remainingLength);
+	if (_sync->_callback != 0)
+		_sync->_callback(_sync->_opaque, status, _threadId, _record->_fileName, _received,
+			_record->_length, remainingLength, totalLength, totalCount - currentCount, totalCount,
+			_record->_attempt + 1);
+}
+
 bool ofxSync::SyncThread::stateClaim(bool &resume) {
 	if ((_record = _sync->claimSyncRecord(_threadId)) == 0)
 		return false;
@@ -254,6 +293,7 @@ bool ofxSync::SyncThread::stateClaim(bool &resume) {
 			ofxLogVer("Keeping existing data file with " << _received << " byte(s)");
 		}
 	}
+	_record->_received = _received;
 	if (_received > 0) {
 		ofxLogVer("Looking for hash file " << _record->_hashPath);
 		if (!hashFile.exists()) {
@@ -285,9 +325,7 @@ bool ofxSync::SyncThread::stateClaim(bool &resume) {
 	ofxLogNot("Thread " << _threadId << " claimed sync record " << _record->_fileName <<
 		" with URL " << _record->_url);
 	_state = SyncThreadStateConnect;
-	if (_sync->_callback != 0)
-		_sync->_callback(_sync->_opaque, SyncStatusStarted, _threadId, _record->_fileName, _received,
-		_record->_length, -1, -1, -1, -1, _record->_attempt + 1);
+	runCallback(SyncStatusStarted, true);
 	return true;
 }
 
@@ -485,6 +523,7 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 		_stream->read(_buffer, BUFFER_SIZE);
 		streamsize count = _stream->gcount();
 		_received += count;
+		_record->_received = _received;
 		ofxLogVer("Received " << count << " (total: " << _received << ") byte(s)");
 		MD5_Update(&_md5Context, _buffer, count);
 		if (!_dataFile->writeFromBuffer(ofBuffer(_buffer, count))) {
@@ -503,9 +542,7 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 			resume = true;
 			return false;
 		}
-		if (_sync->_callback != 0)
-			_sync->_callback(_sync->_opaque, SyncStatusProgress, _threadId, _record->_fileName,
-			_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
+		runCallback(SyncStatusProgress, true);
 	} else {
 		ofxLogVer("End of stream or error for sync record " << _record->_fileName << " with URL " <<
 			_record->_url);
@@ -575,9 +612,7 @@ void ofxSync::SyncThread::stateError(bool resume) {
 			" failed on thread " << _threadId);
 		if (!resume && _record->_resume)
 			_record->_resume = false;
-		if (_sync->_callback != 0)
-			_sync->_callback(_sync->_opaque, SyncStatusFailure, _threadId, _record->_fileName,
-			_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
+		runCallback(SyncStatusFailure, true);
 		_record->_attempt++;
 		if (!_sync->_retry && _dataFile != 0) {
 			ofxLogVer("Destroying data file");
@@ -597,9 +632,7 @@ void ofxSync::SyncThread::stateComplete() {
 	_record->_infoPath.clear();
 	_record->_dataPath.clear();
 	_record->_hashPath.clear();
-	if (_sync->_callback != 0)
-		_sync->_callback(_sync->_opaque, SyncStatusComplete, _threadId, _record->_fileName, _received,
-			_record->_length, -1, -1, -1, -1, _record->_attempt + 1);
+	runCallback(SyncStatusComplete, true);
 	_sync->releaseSyncRecord(_record, false);
 	_record = 0;
 	_state = SyncThreadStateExit;
@@ -660,9 +693,7 @@ void ofxSync::SyncThread::threadedFunction() {
 	if (_record != 0) {
 		ofxLogVer("Force-releasing sync record " << _record->toString());
 		_record->_threadId = -1;
-		if (_sync->_callback != 0)
-			_sync->_callback(_sync->_opaque, SyncStatusInterrupted, _threadId, _record->_fileName,
-				_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
+		runCallback(SyncStatusInterrupted, false);
 	}
 	ERR_remove_thread_state(0);
 	ofxLogVer("Leaving thread " << _threadId);
@@ -841,8 +872,10 @@ bool ofxSync::reload() {
 				continue;
 			}
 		}
-		ofxLogVer("Processing file " << path);
-		SyncRecord record(dir.getName(i), path);
+		ofFile file(path, ofFile::Reference, true);
+		int64_t size = file.getSize();
+		ofxLogVer("Processing file " << path << " with length " << size);
+		SyncRecord record(dir.getName(i), path, size);
 		const RecordMapResult &res = _recordMap.insert(RecordMapElement(record._fileName, record));
 		if (!res.second) {
 			ofxLogErr("Duplicate sync record " << record.toString());

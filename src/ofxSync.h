@@ -36,7 +36,7 @@ public:
 	};
 
 	typedef void (*SyncCallback)(void *opaque, SyncStatus status, int32_t id,
-		const std::string &fileName, int64_t thisLength, int64_t thisTotal, int64_t allLength,
+		const std::string &fileName, int64_t thisLength, int64_t thisTotal, int64_t allLeft,
 		int64_t allTotal, int32_t countLeft, int32_t countTotal, int32_t attempt);
 
 	class FileInfo {
@@ -73,19 +73,20 @@ private:
 		std::string _dataPath;
 		std::string _hashPath;
 		bool _lenient;
+		int64_t _received;
 
 		SyncRecord(const FileInfo &info, bool lenient): FileInfo(info), _threadId(-1), _attempt(0),
-			_resume(true), _lenient(lenient) {}
+			_resume(true), _lenient(lenient), _received(0) {}
 		SyncRecord(const SyncRecord &other): FileInfo(other), _threadId(other._threadId),
 			_attempt(other._attempt), _resume(other._resume), _filePath(other._filePath),
 			_infoPath(other._infoPath), _dataPath(other._dataPath), _hashPath(other._hashPath),
-			_lenient(other._lenient) {}
-		SyncRecord(const std::string &fileName, const std::string &filePath):
-			FileInfo("", fileName, -1, ""), _threadId(-1), _attempt(0), _resume(true),
-			_filePath(filePath), _lenient(false)
+			_lenient(other._lenient), _received(other._received) {}
+		SyncRecord(const std::string &fileName, const std::string &filePath, int64_t length):
+			FileInfo("", fileName, length, ""), _threadId(-1), _attempt(0), _resume(true),
+			_filePath(filePath), _lenient(false), _received(0)
 			{}
 		SyncRecord(): FileInfo("", "", -1, ""), _threadId(-1), _attempt(0), _resume(true),
-			_lenient(false) {}
+			_lenient(false), _received(0) {}
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
 		std::string toString() const;
@@ -126,6 +127,7 @@ private:
 		std::istream *_stream;
 		char _buffer[BUFFER_SIZE];
 
+		void runCallback(SyncStatus status, bool lock);
 		bool stateClaim(bool &resume);
 		bool stateConnect(bool &resume);
 		bool stateDownload(bool &resume);
