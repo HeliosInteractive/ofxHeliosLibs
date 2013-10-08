@@ -75,6 +75,6 @@ class ofxLoadingManager
 		void checkFileLoopComplete ( int &args ) ; 
 
 		vector< ofImage * > threadedQueueImageRefs ; 
-
+		void stop ( ) ; 
 		
 };
