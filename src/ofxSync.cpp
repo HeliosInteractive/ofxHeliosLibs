@@ -286,8 +286,8 @@ bool ofxSync::SyncThread::stateClaim(bool &resume) {
 		" with URL " << _record->_url);
 	_state = SyncThreadStateConnect;
 	if (_sync->_callback != 0)
-		_sync->_callback(_sync->_opaque, SyncStatusStarted, _threadId, _received,
-		_record->_length, _record->_attempt + 1);
+		_sync->_callback(_sync->_opaque, SyncStatusStarted, _threadId, _record->_fileName, _received,
+		_record->_length, -1, -1, -1, -1, _record->_attempt + 1);
 	return true;
 }
 
@@ -504,8 +504,8 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 			return false;
 		}
 		if (_sync->_callback != 0)
-			_sync->_callback(_sync->_opaque, SyncStatusProgress, _threadId, _received,
-			_record->_length, _record->_attempt + 1);
+			_sync->_callback(_sync->_opaque, SyncStatusProgress, _threadId, _record->_fileName,
+			_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
 	} else {
 		ofxLogVer("End of stream or error for sync record " << _record->_fileName << " with URL " <<
 			_record->_url);
@@ -576,8 +576,8 @@ void ofxSync::SyncThread::stateError(bool resume) {
 		if (!resume && _record->_resume)
 			_record->_resume = false;
 		if (_sync->_callback != 0)
-			_sync->_callback(_sync->_opaque, SyncStatusFailure, _threadId, _received, _record->_length,
-				_record->_attempt + 1);
+			_sync->_callback(_sync->_opaque, SyncStatusFailure, _threadId, _record->_fileName,
+			_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
 		_record->_attempt++;
 		if (!_sync->_retry && _dataFile != 0) {
 			ofxLogVer("Destroying data file");
@@ -598,8 +598,8 @@ void ofxSync::SyncThread::stateComplete() {
 	_record->_dataPath.clear();
 	_record->_hashPath.clear();
 	if (_sync->_callback != 0)
-		_sync->_callback(_sync->_opaque, SyncStatusComplete, _threadId, _received, _record->_length,
-			_record->_attempt + 1);
+		_sync->_callback(_sync->_opaque, SyncStatusComplete, _threadId, _record->_fileName, _received,
+			_record->_length, -1, -1, -1, -1, _record->_attempt + 1);
 	_sync->releaseSyncRecord(_record, false);
 	_record = 0;
 	_state = SyncThreadStateExit;
@@ -660,6 +660,9 @@ void ofxSync::SyncThread::threadedFunction() {
 	if (_record != 0) {
 		ofxLogVer("Force-releasing sync record " << _record->toString());
 		_record->_threadId = -1;
+		if (_sync->_callback != 0)
+			_sync->_callback(_sync->_opaque, SyncStatusInterrupted, _threadId, _record->_fileName,
+				_received, _record->_length, -1, -1, -1, -1, _record->_attempt + 1);
 	}
 	ERR_remove_thread_state(0);
 	ofxLogVer("Leaving thread " << _threadId);
@@ -899,6 +902,8 @@ const char *ofxSync::statusToText(SyncStatus status) {
 		return "Failure";
 	case SyncStatusComplete:
 		return "Complete";
+	case SyncStatusInterrupted:
+		return "Interrupted";
 	default:
 		return "(Invalid)";
 	}

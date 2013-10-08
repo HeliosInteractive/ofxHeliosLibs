@@ -31,11 +31,13 @@ public:
 		SyncStatusStarted,
 		SyncStatusProgress,
 		SyncStatusFailure,
-		SyncStatusComplete
+		SyncStatusComplete,
+		SyncStatusInterrupted
 	};
 
 	typedef void (*SyncCallback)(void *opaque, SyncStatus status, int32_t id,
-		int64_t length, int64_t total, int32_t attempt);
+		const std::string &fileName, int64_t thisLength, int64_t thisTotal, int64_t allLength,
+		int64_t allTotal, int32_t countLeft, int32_t countTotal, int32_t attempt);
 
 	class FileInfo {
 		FileInfo &operator=(const FileInfo &rhs);
