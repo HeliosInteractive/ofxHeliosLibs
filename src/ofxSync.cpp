@@ -466,7 +466,6 @@ bool ofxSync::SyncThread::stateConnect(bool &resume) {
 		ofxLogErr("HTTP response with invalid HTTP status code " << response.getStatus() <<
 			" from " << host << " for sync record " << _record->_fileName << " with URL " <<
 			_record->_url);
-		resume = true;
 		return false;
 	}
 	int64_t contentLength = response.getContentLength64();
@@ -787,7 +786,9 @@ void ofxSync::stopThreadsLocked() {
 		_mutex.unlock();
 		// waitForThread() doesn't join, if the thread is not running anymore,
 		// which leads to a pthread resource leak
-		thread->getPocoThread().tryJoin(10 * 1000);
+		if (!thread->getPocoThread().tryJoin(_connectTimeout > _transferTimeout ?
+			_connectTimeout * 1100 : _transferTimeout * 1100)) // 10% more time
+			ofxLogErr("AMAZING! Thread " << thread->_threadId << " did not stop");
 		thread->waitForThread();
 		_mutex.lock();
 		ofxLogVer("Waited for thread " << thread->_threadId);
@@ -819,7 +820,9 @@ void ofxSync::zombieSlayerLocked(bool shutdown) {
 		_zombieThreads.pop_front();
 		ofxLogVer("Slaying zombie thread " << thread->_threadId);
 		// see stopThreadsLocked()
-		thread->getPocoThread().tryJoin(10 * 1000);
+		if (!thread->getPocoThread().tryJoin(_connectTimeout > _transferTimeout ?
+			_connectTimeout * 1100 : _transferTimeout * 1100)) // 10% more time
+			ofxLogErr("AMAZING! Zoimbie thread " << thread->_threadId << " did not stop");
 		thread->waitForThread();
 		ofxLogVer("Thread " << thread->_threadId << " now dead");
 		delete thread;
