@@ -787,8 +787,9 @@ void ofxSync::stopThreadsLocked() {
 		// waitForThread() doesn't join, if the thread is not running anymore,
 		// which leads to a pthread resource leak
 		if (!thread->getPocoThread().tryJoin(_connectTimeout > _transferTimeout ?
-			_connectTimeout * 1100 : _transferTimeout * 1100)) // 10% more time
+			_connectTimeout * 1100 : _transferTimeout * 1100)) { // 10% more time
 			ofxLogErr("AMAZING! Thread " << thread->_threadId << " did not stop");
+		}
 		thread->waitForThread();
 		_mutex.lock();
 		ofxLogVer("Waited for thread " << thread->_threadId);
@@ -821,8 +822,9 @@ void ofxSync::zombieSlayerLocked(bool shutdown) {
 		ofxLogVer("Slaying zombie thread " << thread->_threadId);
 		// see stopThreadsLocked()
 		if (!thread->getPocoThread().tryJoin(_connectTimeout > _transferTimeout ?
-			_connectTimeout * 1100 : _transferTimeout * 1100)) // 10% more time
+			_connectTimeout * 1100 : _transferTimeout * 1100)) { // 10% more time
 			ofxLogErr("AMAZING! Zoimbie thread " << thread->_threadId << " did not stop");
+		}
 		thread->waitForThread();
 		ofxLogVer("Thread " << thread->_threadId << " now dead");
 		delete thread;
