@@ -630,7 +630,6 @@ void ofxSync::SyncThread::stateError(bool resume) {
 void ofxSync::SyncThread::stateComplete() {
 	ofxLogNot("Sync record " << _record->_fileName << " with URL " << _record->_url << " " <<
 		"completed on thread " << _threadId);
-	_record->_filePath.clear();
 	_record->_infoPath.clear();
 	_record->_dataPath.clear();
 	_record->_hashPath.clear();
