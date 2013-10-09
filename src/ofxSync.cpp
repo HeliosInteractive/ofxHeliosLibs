@@ -642,6 +642,7 @@ void ofxSync::SyncThread::stateComplete() {
 
 void ofxSync::SyncThread::threadedFunction() {	
 	ofxLogVer("Entering thread " << _threadId);
+	int64_t entered = ofGetSystemTimeMicros() / 1000;
 	_sync->zombieSlayer(false);
 	bool resume = false;
 	while (isThreadRunning()) {
@@ -698,6 +699,9 @@ void ofxSync::SyncThread::threadedFunction() {
 		runCallback(SyncStatusInterrupted, false);
 	}
 	ERR_remove_thread_state(0);
+	int64_t elapsed = ofGetSystemTimeMicros() / 1000 - entered;
+	if (elapsed >= 0 && elapsed < 1000)
+		sleep(1000 - elapsed);
 	ofxLogVer("Leaving thread " << _threadId);
 }
 
