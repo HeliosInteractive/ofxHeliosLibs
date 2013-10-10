@@ -30,18 +30,18 @@ extern "C" {
 #endif
 
 /* Any 32-bit or wider unsigned integer data type will do */
-typedef uint32_t MD5_u32plus;
+typedef uint32_t ofxSyncMd5Int32;
 
 typedef struct {
-	MD5_u32plus lo, hi;
-	MD5_u32plus a, b, c, d;
+	ofxSyncMd5Int32 lo, hi;
+	ofxSyncMd5Int32 a, b, c, d;
 	uint8_t buffer[64];
-	MD5_u32plus block[16];
-} MD5_CTX;
+	ofxSyncMd5Int32 block[16];
+} ofxSyncMd5Ctx;
 
-extern void MD5_Init(MD5_CTX *ctx);
-extern void MD5_Update(MD5_CTX *ctx, const void *data, uint32_t size);
-extern void MD5_Final(uint8_t *result, MD5_CTX *ctx);
+extern void ofxSyncMd5Init(ofxSyncMd5Ctx *ctx);
+extern void ofxSyncMd5Update(ofxSyncMd5Ctx *ctx, const void *data, uint32_t size);
+extern void ofxSyncMd5Final(uint8_t *result, ofxSyncMd5Ctx *ctx);
 
 #if defined __cplusplus
 }

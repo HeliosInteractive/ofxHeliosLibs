@@ -36,7 +36,6 @@
  */
 
 #include <string.h>
-
 #include "md5.h"
 
 /*
@@ -69,16 +68,16 @@
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
 #define SET(n) \
-	(*(MD5_u32plus *)&ptr[(n) * 4])
+	(*(ofxSyncMd5Int32 *)&ptr[(n) * 4])
 #define GET(n) \
 	SET(n)
 #else
 #define SET(n) \
 	(ctx->block[(n)] = \
-	(MD5_u32plus)ptr[(n) * 4] | \
-	((MD5_u32plus)ptr[(n) * 4 + 1] << 8) | \
-	((MD5_u32plus)ptr[(n) * 4 + 2] << 16) | \
-	((MD5_u32plus)ptr[(n) * 4 + 3] << 24))
+	(ofxSyncMd5Int32)ptr[(n) * 4] | \
+	((ofxSyncMd5Int32)ptr[(n) * 4 + 1] << 8) | \
+	((ofxSyncMd5Int32)ptr[(n) * 4 + 2] << 16) | \
+	((ofxSyncMd5Int32)ptr[(n) * 4 + 3] << 24))
 #define GET(n) \
 	(ctx->block[(n)])
 #endif
@@ -87,11 +86,11 @@
  * This processes one or more 64-byte data blocks, but does NOT update
  * the bit counters.  There are no alignment requirements.
  */
-static const void *body(MD5_CTX *ctx, const void *data, uint32_t size)
+static const void *body(ofxSyncMd5Ctx *ctx, const void *data, uint32_t size)
 {
 	const uint8_t *ptr;
-	MD5_u32plus a, b, c, d;
-	MD5_u32plus saved_a, saved_b, saved_c, saved_d;
+	ofxSyncMd5Int32 a, b, c, d;
+	ofxSyncMd5Int32 saved_a, saved_b, saved_c, saved_d;
 
 	ptr = (const uint8_t *)data;
 
@@ -194,7 +193,7 @@ static const void *body(MD5_CTX *ctx, const void *data, uint32_t size)
 	return ptr;
 }
 
-void MD5_Init(MD5_CTX *ctx)
+void ofxSyncMd5Init(ofxSyncMd5Ctx *ctx)
 {
 	int32_t i;
 
@@ -213,9 +212,9 @@ void MD5_Init(MD5_CTX *ctx)
 	ctx->hi = 0;
 }
 
-void MD5_Update(MD5_CTX *ctx, const void *data, uint32_t size)
+void ofxSyncMd5Update(ofxSyncMd5Ctx *ctx, const void *data, uint32_t size)
 {
-	MD5_u32plus saved_lo;
+	ofxSyncMd5Int32 saved_lo;
 	unsigned long used, free;
 
 	saved_lo = ctx->lo;
@@ -247,7 +246,7 @@ void MD5_Update(MD5_CTX *ctx, const void *data, uint32_t size)
 	memcpy(ctx->buffer, data, size);
 }
 
-void MD5_Final(uint8_t *result, MD5_CTX *ctx)
+void ofxSyncMd5Final(uint8_t *result, ofxSyncMd5Ctx *ctx)
 {
 	unsigned long used, free;
 

@@ -109,7 +109,7 @@ private:
 		std::string toString() const;
 	};
 
-	class Md5Context: public MD5_CTX {
+	class Md5Context: public ofxSyncMd5Ctx {
 	public:
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
@@ -162,7 +162,7 @@ private:
 			// same name for all threads to plug ofSetLogLevel() leak
 			// in startThread()
 			getPocoThread().setName(BOB);
-			MD5_Init(&_md5Context);
+			ofxSyncMd5Init(&_md5Context);
 		}
 	};
 
