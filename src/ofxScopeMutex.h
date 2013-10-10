@@ -21,15 +21,20 @@
 
 class ofxScopeMutex {
 	ofMutex &_mutex;
+	bool _quiet;
 
 public:
-	ofxScopeMutex(ofMutex &mutex): _mutex(mutex) {
-		ofxLogVer("Locking mutex");
+	ofxScopeMutex(ofMutex &mutex, bool quiet = false): _mutex(mutex), _quiet(quiet) {
+		if (!_quiet) {
+			ofxLogVer("Locking mutex");
+		}
 		_mutex.lock();
 	}
 
 	~ofxScopeMutex() {
-		ofxLogVer("Unlocking mutex");
+		if (!_quiet) {
+			ofxLogVer("Unlocking mutex");
+		}
 		_mutex.unlock();
 	}
 };
