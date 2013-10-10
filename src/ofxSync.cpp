@@ -541,7 +541,7 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 		_received += count;
 		_record->_received = _received;
 		ofxLogVer("Received " << count << " (total: " << _received << ") byte(s)");
-		ofxSyncMd5Update(&_md5Context, _buffer, count);
+		MD5_Update(&_md5Context, _buffer, count);
 		if (!_dataFile->writeFromBuffer(ofBuffer(_buffer, count))) {
 			ofxLogErr("Error while writing " << count << " byte(s) to data file " <<
 				_record->_dataPath << " for sync record " << _record->_fileName << " with URL " <<
@@ -571,7 +571,7 @@ bool ofxSync::SyncThread::stateDownload(bool &resume) {
 			return false;
 		}
 		uint8_t md5Result[16];
-		ofxSyncMd5Final(md5Result, &_md5Context);
+		MD5_Final(md5Result, &_md5Context);
 		const std::string &digest = Md5Context::resultToString(md5Result);
 		if (_record->_md5Digest.size() > 0 && digest != _record->_md5Digest) {
 			ofxLogErr("MD5 digest mismatch for sync record " << _record->_fileName << " with URL " <<
@@ -915,7 +915,7 @@ bool ofxSync::reload() {
 
 bool ofxSync::initialize(const std::string &cacheDir) {
 	ofxLogVer("Initializing");
-	assert(sizeof (ofxSyncMd5Ctx) == sizeof (Md5Context));
+	assert(sizeof (MD5_CTX) == sizeof (Md5Context));
 	if (_init) {
 		ofxLogErr("Already initialized");
 		return false;
@@ -1049,13 +1049,13 @@ bool ofxSync::synchronize(FileList files, bool lenient) {
 		}
 		ofxLogVer("Adding new sync record for " << fit->_fileName);
 		Md5Context md5Context;
-		ofxSyncMd5Init(&md5Context);
-		ofxSyncMd5Update(&md5Context, &_startTime, sizeof _startTime);
-		ofxSyncMd5Update(&md5Context, &_threadId, sizeof _threadId);
-		ofxSyncMd5Update(&md5Context, fit->_url.data(), fit->_url.size());
-		ofxSyncMd5Update(&md5Context, fit->_fileName.data(), fit->_fileName.size());
+		MD5_Init(&md5Context);
+		MD5_Update(&md5Context, &_startTime, sizeof _startTime);
+		MD5_Update(&md5Context, &_threadId, sizeof _threadId);
+		MD5_Update(&md5Context, fit->_url.data(), fit->_url.size());
+		MD5_Update(&md5Context, fit->_fileName.data(), fit->_fileName.size());
 		uint8_t md5Result[16];
-		ofxSyncMd5Final(md5Result, &md5Context);
+		MD5_Final(md5Result, &md5Context);
 		const std::string &suffix = Md5Context::resultToString(md5Result);
 		SyncRecord record(*fit, lenient);
 		record._filePath = ofFilePath::join(_cacheDir, fit->_fileName);

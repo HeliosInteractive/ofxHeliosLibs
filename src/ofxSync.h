@@ -38,9 +38,9 @@
 #include <Poco/Exception.h>
 #include <openssl/engine.h>
 #include <openssl/conf.h>
+#include <openssl/md5.h>
 #include "ofxAtomicLog.h"
 #include "ofxScopeMutex.h"
-#include "md5.h"
 
 class ofxSync {
 public:
@@ -109,7 +109,7 @@ private:
 		std::string toString() const;
 	};
 
-	class Md5Context: public ofxSyncMd5Ctx {
+	class Md5Context: public MD5_CTX {
 	public:
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
@@ -162,7 +162,7 @@ private:
 			// same name for all threads to plug ofSetLogLevel() leak
 			// in startThread()
 			getPocoThread().setName(BOB);
-			ofxSyncMd5Init(&_md5Context);
+			MD5_Init(&_md5Context);
 		}
 	};
 
