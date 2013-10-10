@@ -403,5 +403,35 @@ void ofxLoadingManager::loadCompleteHandler( string &args )
 	cout <<  args << " : has finished writing to disk." << endl ;  
 }
 
+void ofxLoadingManager::stop ( ) 
+{
+	
+
+	
+
+	
+	threadedLoader.lock( ) ; 
+	//threadedLoader.waitForThread( true ) ; 
+	threadedLoader.stopThread( ) ; 
+	threadedLoader.unlock( ) ; 
+	asyncLoadData.clear( ) ; 
+
+	ofUnregisterURLNotification( this ) ; 
+	
+	checkFileLoopTimer.stop() ;
+	threadedQueueImageRefs.clear( ) ; 
+
+	for ( int i = 0 ; i < numFileSavers ; i++ ) 
+	{
+		ofRemoveListener( fileSavers[i]->timeoutTimer.TIMER_COMPLETE , this , &ofxLoadingManager::timerCompleteHandler ) ; 
+		fileSavers[i]->stopThread( ) ; 
+	}
+
+	ofRemoveListener( checkFileLoopTimer.TIMER_COMPLETE , this , &ofxLoadingManager::checkFileLoopComplete ) ; 
+//	ofRemoveListener( LoadingEvents::Instance()->FILE_LOADED , this, &ofxLoadingManager::loadCompleteHandler  ) ; 
+	ofRemoveAllURLRequests( ) ; 
+
+}
+
 	
 	
