@@ -1,3 +1,20 @@
+// Copyright (c) 2013 Helios Interactive Technologies, Inc. (heliosinteractive.com)
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+// associated documentation files (the "Software"), to deal in the Software without restriction,
+// including without limitation the rights to use, copy, modify, merge, publish, distribute,
+// sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+// NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 #pragma once
 #include <stdint.h>
 #include <string.h>
@@ -21,9 +38,9 @@
 #include <Poco/Exception.h>
 #include <openssl/engine.h>
 #include <openssl/conf.h>
+#include <openssl/md5.h>
 #include "ofxAtomicLog.h"
 #include "ofxScopeMutex.h"
-#include "md5.h"
 
 class ofxSync {
 public:
@@ -36,7 +53,7 @@ public:
 	};
 
 	typedef void (*SyncCallback)(void *opaque, SyncStatus status, int32_t id,
-		const std::string &fileName, int64_t thisLength, int64_t thisTotal, int64_t allLength,
+		const std::string &fileName, int64_t thisLength, int64_t thisTotal, int64_t allLeft,
 		int64_t allTotal, int32_t countLeft, int32_t countTotal, int32_t attempt);
 
 	class FileInfo {
@@ -73,19 +90,20 @@ private:
 		std::string _dataPath;
 		std::string _hashPath;
 		bool _lenient;
+		int64_t _received;
 
 		SyncRecord(const FileInfo &info, bool lenient): FileInfo(info), _threadId(-1), _attempt(0),
-			_resume(true), _lenient(lenient) {}
+			_resume(true), _lenient(lenient), _received(0) {}
 		SyncRecord(const SyncRecord &other): FileInfo(other), _threadId(other._threadId),
 			_attempt(other._attempt), _resume(other._resume), _filePath(other._filePath),
 			_infoPath(other._infoPath), _dataPath(other._dataPath), _hashPath(other._hashPath),
-			_lenient(other._lenient) {}
-		SyncRecord(const std::string &fileName, const std::string &filePath):
-			FileInfo("", fileName, -1, ""), _threadId(-1), _attempt(0), _resume(true),
-			_filePath(filePath), _lenient(false)
+			_lenient(other._lenient), _received(other._received) {}
+		SyncRecord(const std::string &fileName, const std::string &filePath, int64_t length):
+			FileInfo("", fileName, length, ""), _threadId(-1), _attempt(0), _resume(true),
+			_filePath(filePath), _lenient(false), _received(0)
 			{}
 		SyncRecord(): FileInfo("", "", -1, ""), _threadId(-1), _attempt(0), _resume(true),
-			_lenient(false) {}
+			_lenient(false), _received(0) {}
 		bool writeToFile(const std::string &path);
 		bool readFromFile(const std::string &path);
 		std::string toString() const;
@@ -126,6 +144,7 @@ private:
 		std::istream *_stream;
 		char _buffer[BUFFER_SIZE];
 
+		void runCallback(SyncStatus status, bool lock);
 		bool stateClaim(bool &resume);
 		bool stateConnect(bool &resume);
 		bool stateDownload(bool &resume);
