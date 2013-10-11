@@ -4,6 +4,8 @@
 
 ofxSync synchronizes a local directory with content from a remote web server. Essentially, you give ofxSync a set of URLs and ofxSync downloads the content from each URL to a file in a directory of your choice. It makes sure that it retries a download later in case of a server or network problem and it supports concurrent downloads on multiple threads, resuming downloads, and MD5 checksums.
 
+It does not, however, detect content changes on the web server. Once ofxSync has downloaded the content for a given URL, it will not revisit that URL again. Maybe it should have been called "ofxDownloader".
+
 ## Required Information
 
 For each download you provide the following information to ofxSync.
