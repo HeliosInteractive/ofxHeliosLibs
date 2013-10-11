@@ -132,7 +132,7 @@ void ofxLoadingManager::checkFileLoopComplete ( int &args )
 			//cout << "ATTEMPTING TO ADD : " << (*d).url << endl ; 
 			if ( bAdd == true ) 
 			{
-				cout << "it now exists ! LOADING" << endl ;
+				ofLogVerbose( "it now exists ! LOADING" ) ; //<< endl ;
 				d = asyncLoadData.erase( d ) ; 
 				return ; 
 			}
@@ -158,8 +158,19 @@ void ofxLoadingManager::checkFileLoopComplete ( int &args )
 //There's a WAY better way to implement this.
 bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path , bool bAddToQueue ) 
 {
+	char slashChar = '/' ;
+	if ( path[0] == slashChar ) 
+	{
+		//cout << "GET THAT SLASH OUT OF THERE!" <<endl; 
+		path = path.substr( 1 , path.size() -1 ) ; 
+		//cout << "path is now : " << path << endl ;
 
+	}
 	string localString = loadDirectoryPath + remoteUrlToLocal( path ) ; 
+	//cout << "directoryPath" << loadDirectoryPath << endl ; 
+	//cout << "path :" << path << " localPath : " << localString << endl ; 
+
+	
 
 	bool bBinary = checkFileExtensionForBinary( path  ) ; 
 	ofFile checkIfItLocallyExists ; //ofFile(localString,ofFile::ReadOnly , bBinary ) ;  
@@ -171,7 +182,7 @@ bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path ,
 	data.setup( localString , generateUniqueId() , bBinary ) ; 
 	if ( bExists ) 
 	{
-		ss << "'" << localString << "'" << " already exists ! loading now" << endl ; 
+		ss << "'" << path << "'" << " already exists ! loading now" << endl ; 
 		ofLogVerbose( ss.str() ) ;
 
 		//TODO do local things and notify that the file is ready to be loaded.
@@ -181,7 +192,7 @@ bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path ,
 	}
 	else
 	{
-		ss << "bAddToQueue :" << bAddToQueue << "  - '" << localString << "' does not exist, adding to the load queue" << endl ; 
+		ss << "bAddToQueue :" << bAddToQueue << "  - '" << path << "' does not exist, adding to the load queue" << endl ; 
 		ofLogVerbose( ss.str() ) ;
 		if ( bAddToQueue == true ) 
 		{
@@ -362,7 +373,7 @@ string ofxLoadingManager::remoteUrlToLocal( string url )
 	int index = url.find_last_of( "/" ) ; 
 	string localUrl = url.substr( index + 1 ) ; 
 
-	return ( localDirectoryPath + "/" + localUrl )   ; 
+	return ( localDirectoryPath + '/' + localUrl )   ; 
 }
 
 
