@@ -45,6 +45,8 @@ void ofxMatrixTransformImage::setImageProperties( string path , float _x , float
 
 void ofxMatrixTransformImage::setImagePath ( string path ) 
 {
+	//Could do more here
+	//Check if it's the same Path ? Clear the image if it's already load, etc 
 	imageFilePath = path ;
 }
     

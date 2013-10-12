@@ -46,6 +46,9 @@ void ofxLoadingManager::setup (  string _localSavePath )
 
 	checkFileLoopTimer.setup( 5000 , "checkFileLoopTimer" ) ;
 	ofAddListener( checkFileLoopTimer.TIMER_COMPLETE , this , &ofxLoadingManager::checkFileLoopComplete ) ; 
+
+	threadedLoader = new ofxThreadedImageLoader() ; 
+	//ofxThreadedImageLoader * threadedLoader ; 
 }
 
 
@@ -186,7 +189,7 @@ bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path ,
 		ofLogVerbose( ss.str() ) ;
 
 		//TODO do local things and notify that the file is ready to be loaded.
-		threadedLoader.loadFromDisk( image , data.url ) ;  
+		threadedLoader->loadFromDisk( image , data.url ) ;  
 		
 		return true  ; 
 	}
@@ -416,15 +419,11 @@ void ofxLoadingManager::loadCompleteHandler( string &args )
 
 void ofxLoadingManager::stop ( ) 
 {
-	
+	threadedLoader->yield() ; 
+	threadedLoader->waitForThread( true ) ; 
+	delete threadedLoader ; 
+	threadedLoader = NULL ; 
 
-	
-
-	
-	threadedLoader.lock( ) ; 
-	//threadedLoader.waitForThread( true ) ; 
-	threadedLoader.stopThread( ) ; 
-	threadedLoader.unlock( ) ; 
 	asyncLoadData.clear( ) ; 
 
 	ofUnregisterURLNotification( this ) ; 
@@ -435,7 +434,7 @@ void ofxLoadingManager::stop ( )
 	for ( int i = 0 ; i < numFileSavers ; i++ ) 
 	{
 		ofRemoveListener( fileSavers[i]->timeoutTimer.TIMER_COMPLETE , this , &ofxLoadingManager::timerCompleteHandler ) ; 
-		fileSavers[i]->stopThread( ) ; 
+		fileSavers[i]->waitForThread( true ) ; 
 	}
 
 	ofRemoveListener( checkFileLoopTimer.TIMER_COMPLETE , this , &ofxLoadingManager::checkFileLoopComplete ) ; 
