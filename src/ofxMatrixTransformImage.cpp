@@ -43,6 +43,12 @@ void ofxMatrixTransformImage::setImageProperties( string path , float _x , float
 	setImagePath ( path ) ; 
 }
 
+void ofxMatrixTransformImage::clear( ) 
+{
+	bLoaded = false ; 
+	image.clear() ; 
+}
+
 void ofxMatrixTransformImage::setImagePath ( string path ) 
 {
 	//Could do more here

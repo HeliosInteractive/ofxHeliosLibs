@@ -438,7 +438,6 @@ void ofxLoadingManager::stop ( )
 	}
 
 	ofRemoveListener( checkFileLoopTimer.TIMER_COMPLETE , this , &ofxLoadingManager::checkFileLoopComplete ) ; 
-//	ofRemoveListener( LoadingEvents::Instance()->FILE_LOADED , this, &ofxLoadingManager::loadCompleteHandler  ) ; 
 	ofRemoveAllURLRequests( ) ; 
 
 }
