@@ -38,7 +38,7 @@ class ofxLoadingManager
 		int numFileSavers ; 
 
 		ofxThreadedImageLoader * threadedLoader ; 
-		bool addToThreadedImageQueue( ofImage &  image , string path , bool bAddToQueue = true ) ; 
+		bool addToThreadedImageQueue( ofImage &  image , string path , bool bAddToQueue = true , bool bKeepOriginalPath = false  ) ; 
 
 		//So this is my super hacky method of having 10 threaded object savers at any given time 
 		ofxThreadedFileSaver saver0 ;

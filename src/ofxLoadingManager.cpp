@@ -159,7 +159,7 @@ void ofxLoadingManager::checkFileLoopComplete ( int &args )
 
 
 //There's a WAY better way to implement this.
-bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path , bool bAddToQueue ) 
+bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path , bool bAddToQueue , bool bKeepOriginalPath ) 
 {
 	char slashChar = '/' ;
 	if ( path[0] == slashChar ) 
@@ -169,7 +169,11 @@ bool ofxLoadingManager::addToThreadedImageQueue( ofImage & image , string path ,
 		//cout << "path is now : " << path << endl ;
 
 	}
-	string localString = loadDirectoryPath + remoteUrlToLocal( path ) ; 
+
+	string localString  = path ; 
+
+	if ( !bKeepOriginalPath ) ; 
+		localString = loadDirectoryPath + remoteUrlToLocal( path ) ; 
 	//cout << "directoryPath" << loadDirectoryPath << endl ; 
 	//cout << "path :" << path << " localPath : " << localString << endl ; 
 
