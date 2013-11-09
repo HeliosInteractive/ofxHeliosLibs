@@ -20,6 +20,15 @@ void ofxAlphaStackItem::setup( )
 void ofxAlphaStackItem::alphaStackUpdate ( float stackAlpha )
 {
     calcAlpha = alpha * stackAlpha ;
+    
+    //Update children
+    if ( children.size() > 0 )
+    {
+        for ( int i = 0 ; i < children.size() ; i++ )
+        {
+            children[i]->alphaStackUpdate( calcAlpha ) ; 
+        }
+    }
 }
 
 //Return alpha value that plays nice with ofSetColor ( r , g , b , getOFAlpha() ) ;

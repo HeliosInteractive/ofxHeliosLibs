@@ -19,6 +19,9 @@ class ofxAlphaStackItem
 
         float alpha ;       //Alpha works similar to inside flash : a float from 0 - 1
         float calcAlpha ;   //Calc Alpha is the multplied alpha for this item where it is on teh stack
+    
+        vector < ofxAlphaStackItem * > children ; 
+    
 
     protected:
     private:
