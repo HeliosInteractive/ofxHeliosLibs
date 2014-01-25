@@ -6,37 +6,86 @@
 class SoundBank
 {
     public:
-        SoundBank() {}
+        SoundBank()
+		{
+			lastRandomIndex = -1 ;
+			volume = 1.0f ; 
+		}
+
         virtual ~SoundBank() {}
 
+        vector<ofSoundPlayer * > sounds ;
+		float volume ; 
 
-        vector<ofSoundPlayer> sounds ;
-
-
-        void addSound ( string path , bool bMultiPlay = false )
+        void addSound ( string path , float volume = 1.0f )
         {
-            ofSoundPlayer s ;
-            s.loadSound( path ) ;
-            s.setMultiPlay( bMultiPlay ) ;
-            sounds.push_back( s ) ;
-            lastRandomIndex = -1 ;
+           int i = sounds.size() ; 
+           sounds.push_back( new ofSoundPlayer() ) ;
+		   sounds [ i ]->loadSound( path ) ;
+		   sounds [ i ]->setMultiPlay( false ); 
         }
+
+		void loadFolder( string folderPath , float _volume = 1.0f  ) 
+		{
+			volume = _volume ; 
+			ofDirectory dir  = ofDirectory( folderPath ) ; 
+			
+			dir.allowExt( "wav" ); 
+			dir.allowExt( "aif" ) ;
+			dir.allowExt( "mp3" ) ; 
+			dir.allowExt( "aiff" ) ; 
+			dir.allowExt( "m4a" ) ; 
+			dir.listDir( ); 
+
+			if ( dir.size() == 0 ) 
+			{
+				ofLogError( folderPath ) << " is empty ! Not loading any sounds" << endl ; 
+				return ; 
+			}
+
+			for ( int i = 0 ; i < dir.size() ; i++ )
+			{
+				sounds.push_back( new ofSoundPlayer() ) ;
+				sounds [ i ]->loadSound( dir.getPath( i )  ) ;
+				sounds [ i ]->setMultiPlay( false ); 
+				sounds [ i ]->setVolume( volume )  ; 
+			}
+		}
 
         int lastRandomIndex ;
 
         void playRandomSound ( )
         {
+
+			
+			if ( sounds.size() == 0 ) 
+			{
+				ofLogError( "SoundBank::playRandomSound()" ) << " is empty ! Not loading any sounds" << endl ; 
+				return ; 
+			}
+
+
+			for( int i = 0 ; i < sounds.size() ; i++ ) 
+			{
+				
+				if ( sounds[i]->getIsPlaying() == true ) 
+					return ; 
+			}
             //We wouldn't want to play the same random sound 2x in a row
             int randomIndex = lastRandomIndex ;
-            while ( randomIndex == lastRandomIndex )
-            {
-                randomIndex = ofRandom( (sounds.size()) ) ;
-            }
+			if ( sounds.size() > 1 ) 
+			{
+				  while ( randomIndex == lastRandomIndex )
+				 {
+					   randomIndex = floor( ofRandom( ( sounds.size()-1 ) ) )  ;
+				 }
+			}
 
             lastRandomIndex = randomIndex ;
-            cout << "random index was : " << randomIndex << " of : " << sounds.size() << endl ;
-            sounds[ randomIndex ].play() ;
-
+            ofLogVerbose( "SoundBank::playRandomSound" )  << " random index was : " << randomIndex << " of : " << (sounds.size()-1) << endl ;
+			sounds[ randomIndex ]->setVolume( volume ) ; 
+            sounds[ randomIndex ]->play() ;
+			
 
         }
     protected:
