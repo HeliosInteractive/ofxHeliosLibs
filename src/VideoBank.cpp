@@ -1,10 +1,11 @@
 #include "VideoBank.h"
 
 
-void VideoBank::setup ( float _x , float _y , float videoDelay ) 
+void VideoBank::setup ( float _x , float _y , float videoDelay , bool _bLoop ) 
 {
 	x = _x ; 
 	y = _y ; 
+	bLoop = _bLoop ; 
 	videoDelayTimer.setup( videoDelay ) ;
 	ofAddListener( videoDelayTimer.TIMER_COMPLETE , this , &VideoBank::videoDelayTimerComplete ) ; 
 
@@ -12,7 +13,8 @@ void VideoBank::setup ( float _x , float _y , float videoDelay )
 
 void VideoBank::videoDelayTimerComplete( int & args )
 {
-	playRandomVideo( ) ; 
+	if ( bLoop == true ) 
+		playRandomVideo( ) ; 
 }
  
 void VideoBank::loadFolder( string folderPath , float _volume ) 
@@ -62,8 +64,8 @@ void VideoBank::update( )
 		
 		if ( videos[ currentVideo ]->getIsMovieDone() == true && videoDelayTimer.bIsRunning == false )
 		{
-			//cout << " STARTING TIMER" << endl ; 
-			//videoDelayTimer.start( false , true ) ; 
+			//cout << " STARTING TIMER @"  << ofGetElapsedTimeMillis() << " when delay is " << videoDelayTimer.delayMillis <<  endl ; 
+			videoDelayTimer.start( false , true ) ; 
 		}
 	}
 	videoDelayTimer.update( ) ;
@@ -95,15 +97,48 @@ void VideoBank::playRandomVideo( )
 	{
 			while ( randomIndex == lastRandomIndex )
 			{
-				randomIndex = floor( ofRandom( ( videos.size()-1 ) ) )  ;
+				randomIndex = ofWrap( (int)floor( ofRandom( 0 , videos.size() ) ) , 0 , videos.size() ) ;
 			}
 	}
 
 	currentVideo = randomIndex ; 
     lastRandomIndex = randomIndex ;
     ofLogVerbose( "VideoBank::playRandomVideo" )  << " random index was : " << randomIndex << " of : " << (videos.size()-1) << endl ;
-	videos[ currentVideo ]->setVolume( volume ) ; 
+	//videos[ currentVideo ]->setVolume( volume ) ; 
 	videos[ currentVideo ]->setFrame( 0 ) ; 
     videos[ currentVideo ]->play() ;
 	videos[ currentVideo ]->update( ) ; 
+}
+
+void VideoBank::playVideoAt( int index ) 
+{
+	currentVideo = index ; 
+    lastRandomIndex = index ;
+	//videos[ currentVideo ]->setVolume( volume ) ; 
+	videos[ currentVideo ]->setFrame( 0 ) ; 
+    videos[ currentVideo ]->play() ;
+	videos[ currentVideo ]->update( ) ; 
+}
+
+
+void VideoBank::stop ( ) 
+{
+	for ( int i = 0 ; i < videos.size() ; i++ ) 
+	{
+		videos[ i ]->stop( ); 
+	}
+}
+	
+void VideoBank::reset( )
+{
+	for ( int i = 0 ; i < videos.size() ; i++ ) 
+	{
+		// This seems like overkill but it will prevent the white texture showing up at the beginning 
+		//  and is overall better for seamlessness
+		videos[ i ]->stop( ); 
+		videos[ i ]->setFrame( 0 ) ; 
+		videos[ i ]->play( ) ; 
+		videos[ i ]->update( ) ; 
+		videos[ i ]->stop( ) ; 
+	}
 }

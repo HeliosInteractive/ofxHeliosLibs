@@ -73,12 +73,16 @@ class SoundBank
 			}
             //We wouldn't want to play the same random sound 2x in a row
             int randomIndex = lastRandomIndex ;
-			if ( sounds.size() > 1 ) 
+			if ( sounds.size() > 2 ) 
 			{
 				  while ( randomIndex == lastRandomIndex )
 				 {
-					   randomIndex = floor( ofRandom( ( sounds.size()-1 ) ) )  ;
+					   randomIndex =  ofWrap( (int) ofRandom( ( sounds.size() ) ) , 0 , sounds.size() - 1 )  ;
 				 }
+			}
+			else
+			{
+				 randomIndex =  ofWrap( (int) ofRandom( ( sounds.size() ) ) , 0 , sounds.size() - 1 )  ;
 			}
 
             lastRandomIndex = randomIndex ;
