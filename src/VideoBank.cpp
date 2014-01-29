@@ -64,6 +64,10 @@ void VideoBank::update( )
 		
 		if ( videos[ currentVideo ]->getIsMovieDone() == true && videoDelayTimer.bIsRunning == false )
 		{
+			videos[ currentVideo ]->firstFrame() ; 
+			videos[ currentVideo ]->update() ; 
+			videos[ currentVideo ]->stop() ; 
+			
 			//cout << " STARTING TIMER @"  << ofGetElapsedTimeMillis() << " when delay is " << videoDelayTimer.delayMillis <<  endl ; 
 			videoDelayTimer.start( false , true ) ; 
 		}
@@ -91,6 +95,15 @@ void VideoBank::playRandomVideo( )
 		return ; 
 	}
 
+	if ( currentVideo > 0 ) 
+	{
+		if ( videos[ currentVideo ]->isPlaying() == true ) 
+		{
+			ofLogError( " CURRENT VIDEO IS PLAYING. ABORT" ) ; 
+			return ;
+		}
+	}
+
     //We wouldn't want to play the same random sound 2x in a row
     int randomIndex = lastRandomIndex ;
 	if ( videos.size() > 1 ) 
@@ -105,9 +118,8 @@ void VideoBank::playRandomVideo( )
     lastRandomIndex = randomIndex ;
     ofLogVerbose( "VideoBank::playRandomVideo" )  << " random index was : " << randomIndex << " of : " << (videos.size()-1) << endl ;
 	//videos[ currentVideo ]->setVolume( volume ) ; 
-	videos[ currentVideo ]->setFrame( 0 ) ; 
+	//videos[ currentVideo ]->firstFrame() ;  
     videos[ currentVideo ]->play() ;
-	videos[ currentVideo ]->update( ) ; 
 }
 
 void VideoBank::playVideoAt( int index ) 
@@ -115,9 +127,8 @@ void VideoBank::playVideoAt( int index )
 	currentVideo = index ; 
     lastRandomIndex = index ;
 	//videos[ currentVideo ]->setVolume( volume ) ; 
-	videos[ currentVideo ]->setFrame( 0 ) ; 
-    videos[ currentVideo ]->play() ;
-	videos[ currentVideo ]->update( ) ; 
+	videos[ currentVideo ]->firstFrame() ; 
+	videos[ currentVideo ]->play() ;
 }
 
 
@@ -127,6 +138,9 @@ void VideoBank::stop ( )
 	{
 		videos[ i ]->stop( ); 
 	}
+
+	currentVideo = -1 ; 
+	videoDelayTimer.stop() ; 
 }
 	
 void VideoBank::reset( )
@@ -136,9 +150,13 @@ void VideoBank::reset( )
 		// This seems like overkill but it will prevent the white texture showing up at the beginning 
 		//  and is overall better for seamlessness
 		videos[ i ]->stop( ); 
-		videos[ i ]->setFrame( 0 ) ; 
+		videos[ i ]->firstFrame() ; 
+		/*setFrame( 0 ) ; 
 		videos[ i ]->play( ) ; 
 		videos[ i ]->update( ) ; 
-		videos[ i ]->stop( ) ; 
+		videos[ i ]->stop( ) ; */
 	}
+
+	videoDelayTimer.stop() ; 
+	currentVideo = -1 ;
 }

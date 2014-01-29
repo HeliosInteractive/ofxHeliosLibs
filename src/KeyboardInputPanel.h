@@ -146,6 +146,27 @@ public :
 			return ; 
 		}
 
+		if ( key == 8 ) 
+		{
+			if ( text.size() >= 2 ) 
+			{
+				text.pop_back() ; 
+				inputBlock.setText( text ) ; 
+			}
+			else		
+			{
+				inputBlock.setText( startText ) ; 
+				text = "" ; 
+			}
+	
+			if ( bCheckIfEmailValid() == false && validateImage.alpha > 0.0f ) 
+			{
+				//Was valid now is not
+				Tweenzor::add( &validateImage.alpha , validateImage.alpha , 0.0f , 0.0f, 0.5f , EASE_OUT_QUAD ) ; 
+			}
+			return ; 
+		}
+
 		//ofLogVerbose( "KeyboardInputPanel::keyPressed " ) << " key : " << key << endl ;
 		if ( bTypingActive == true && text.size() < maxCharacters ) 
 		{
@@ -161,26 +182,7 @@ public :
 					break ; 
 					
 			}
-			if ( key == 8 ) 
-			{
-				if ( text.size() >= 2 ) 
-				{
-					text.pop_back() ; 
-					inputBlock.setText( text ) ; 
-				}
-				else
-				{
-					inputBlock.setText( startText ) ; 
-					text = "" ; 
-				}
-
-				if ( bCheckIfEmailValid() == false && validateImage.alpha > 0.0f ) 
-				{
-					//Was valid now is not
-					Tweenzor::add( &validateImage.alpha , validateImage.alpha , 0.0f , 0.0f, 0.5f , EASE_OUT_QUAD ) ; 
-				}
-				return ; 
-			}
+			
 
 			if ( bShiftActive == false ) 
 			{
