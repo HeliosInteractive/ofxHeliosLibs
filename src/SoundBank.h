@@ -54,6 +54,20 @@ class SoundBank
 
         int lastRandomIndex ;
 
+
+		void update ( ) 
+		{
+			for ( int i = 0 ; i < sounds.size() ; i++ ) 
+				sounds[ i ]->setVolume( volume ) ; 
+		}
+
+
+		void stop () 
+		{
+			for ( int i = 0 ; i < sounds.size() ; i++ ) 
+				sounds[ i ]->stop() ; 
+		}
+
         void playRandomSound ( )
         {
 

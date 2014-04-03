@@ -6,6 +6,7 @@ ofxMatrixTransformImage::ofxMatrixTransformImage ( )
 	scale = 1.0f ;
 	rotation = 0.0f ;
 	bInheritAlpha = false ;
+	setup( ) ; 
 	//alpha = 0 ;
 }
     
@@ -14,17 +15,30 @@ ofxMatrixTransformImage::~ofxMatrixTransformImage ( )
     image.clear() ; 
 }
 
+void ofxMatrixTransformImage::setup ( ) 
+{
+	ofxMatrixTransformObject::setup() ;
+	ofxAlphaStackItem::setup ( ) ; 
+
+	scale = 1.0f ;
+	rotation = 0.0f ;
+	bInheritAlpha = false ;
+
+}
+
 void ofxMatrixTransformImage::draw ( )
 {
-	matrixPush( ) ;
+	pushMatrix( ) ;
         ofSetColor ( 255 , 255 , 255 , getOFAlpha() ) ;
-        image.draw ( image.width * -_anchor.x , image.height * -_anchor.y ) ;
-	matrixPop( ) ;
+		if ( image.bAllocated() ) 
+		    image.draw ( image.width * -_anchor.x , image.height * -_anchor.y ) ;
+	popMatrix( ) ;
 }
 
 void ofxMatrixTransformImage::loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha )
 {
-	image.loadImage( path ) ;
+	if ( path != "" ) 
+		image.loadImage( path ) ;
 	x = _x ;
 	y = _y ;
     _anchor = anchor ;

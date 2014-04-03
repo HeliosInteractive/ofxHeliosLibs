@@ -31,6 +31,13 @@ void ofxAlphaStackItem::alphaStackUpdate ( float stackAlpha )
     }
 }
 
+string ofxAlphaStackItem::getDebugString()
+{
+	stringstream ss ; 
+	ss << "alpha : " << alpha << " calcAlpha : " << calcAlpha ; 
+	return ss.str() ; 
+}
+
 //Return alpha value that plays nice with ofSetColor ( r , g , b , getOFAlpha() ) ;
 float ofxAlphaStackItem::getOFAlpha( )
 {

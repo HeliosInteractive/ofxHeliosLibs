@@ -11,7 +11,7 @@ void VideoBank::setup ( float _x , float _y , float videoDelay , bool _bLoop )
 
 }
 
-void VideoBank::videoDelayTimerComplete( int & args )
+void VideoBank::videoDelayTimerComplete( int &args )
 {
 	if ( bLoop == true ) 
 		playRandomVideo( ) ; 

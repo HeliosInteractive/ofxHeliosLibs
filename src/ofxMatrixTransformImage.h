@@ -11,6 +11,8 @@ class ofxMatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTrans
 		ofxMatrixTransformImage ( );
 
         ~ofxMatrixTransformImage ( );
+
+		void setup ( ) ; 
 		void draw ( );
 		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f );
         void setImageProperties( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f  ) ;
