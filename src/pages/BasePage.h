@@ -21,7 +21,9 @@ public :
 	virtual void transitionOut( ) ;  
 	virtual void reset ( ) { } 
 
-	virtual void input( float x , float y ) ; 
+	virtual void inputDown( float x , float y ) ; 
+	virtual void inputDrag( float x , float y ) ; 
+	virtual void inputRelease( float x , float y ) ; 
 	string label ;
 	int id ; 
 	ofColor debugColor ;

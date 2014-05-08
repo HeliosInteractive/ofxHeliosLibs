@@ -42,7 +42,7 @@ void ofxThreadedFileSaver::saveFileToPath ( string path , ofBuffer fileBufferDat
 	saveToPath = path ; 
 	bIsBinary = _bIsBinary ; 
 	originalUrl = _originalUrl ; 
-	timeoutTimer.setup( 9000 , "noName" , 18 , false ) ; 
+	timeoutTimer.setup( 9000 , "noName" , 18 ) ; 
 	// void setup ( unsigned long delayInMillis , string _name = "noName" , int eventId = 18 , bool bUseTweenzor = true ) ;
 	timeoutTimer.start( false , true ) ; 
 	startThread( true , false ) ; 

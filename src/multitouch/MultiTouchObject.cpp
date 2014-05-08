@@ -19,10 +19,10 @@ void MultiTouchObject::setup ( float _x , float _y , float _size , float _dampen
 	y = _y ; 
     area = ofRectangle (  -size/2 , -size/2 , size , size ) ;
 	setHitBounds( area ) ;
-    color = ofColor( ofRandom( 255 ) , ofRandom ( 255 ) , ofRandom( 255 ) ) ;
+    color = ofColor( 60 ) ;
     multiTouch.setup( ) ;
     //Set min/max scales
-    multiTouch.setScaleRange( .5f , 1.5f ) ;
+    multiTouch.setScaleRange( 0.75f , 3.5f ) ;
     dampen = _dampen;
 	
 
@@ -31,18 +31,19 @@ void MultiTouchObject::setup ( float _x , float _y , float _size , float _dampen
 void MultiTouchObject::update ( )
 {
     multiTouch.update( ) ;
-	x += ( multiTouch.deltaX * dampen ) ;
-    y += ( multiTouch.deltaY * dampen ) ;
+	x += ( multiTouch.delta.x * dampen ) ;
+    y += ( multiTouch.delta.y * dampen ) ;
+	z += ( multiTouch.delta.z * dampen ) ;
     rotation += ( multiTouch.deltaDeg  * dampen ) ;
-    scale = multiTouch.scaleX ;
+    scale = multiTouch.scale ;
 }
 
 void MultiTouchObject::draw ( )
 {
-	matrixPush() ; 
+	pushMatrix() ; 
         ofSetColor( color ) ;
         ofRect( area ) ;
-	matrixPop() ; 
+	popMatrix() ; 
 }
 
 string MultiTouchObject::getDebugOutput() 

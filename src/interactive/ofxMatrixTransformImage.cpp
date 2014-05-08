@@ -7,6 +7,7 @@ ofxMatrixTransformImage::ofxMatrixTransformImage ( )
 	rotation = 0.0f ;
 	bInheritAlpha = false ;
 	setup( ) ; 
+
 	//alpha = 0 ;
 }
     

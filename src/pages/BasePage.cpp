@@ -50,8 +50,17 @@ void BasePage::transitionOut( )
 	}
 }
 
-void BasePage::input( float x , float y ) 
+void BasePage::inputDown( float x , float y ) 
 {
 
 }
 
+void BasePage::inputDrag( float x , float y ) 
+{
+
+}
+
+void BasePage::inputRelease( float x , float y ) 
+{
+
+} 

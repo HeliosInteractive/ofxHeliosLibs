@@ -24,9 +24,9 @@ void ofxAlphaStackItem::alphaStackUpdate ( float stackAlpha )
     //Update children
     if ( children.size() > 0 )
     {
-        for ( int i = 0 ; i < children.size() ; i++ )
+        for ( auto child = children.begin() ; child != children.end() ; child++ ) 
         {
-            children[i]->alphaStackUpdate( calcAlpha ) ; 
+            (*child)->alphaStackUpdate( calcAlpha ) ; 
         }
     }
 }
@@ -42,4 +42,12 @@ string ofxAlphaStackItem::getDebugString()
 float ofxAlphaStackItem::getOFAlpha( )
 {
     return calcAlpha * 255.0f  ;
+}
+
+void ofxAlphaStackItem::drawChildren( ) 
+{
+	 for ( auto child = children.begin() ; child != children.end() ; child++ ) 
+     {
+		(*child)->draw( ) ; 
+     }
 }

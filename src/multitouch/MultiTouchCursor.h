@@ -17,12 +17,14 @@ class MultiTouchCursor
         ofPoint position, speed ;
         int id ;
 
-        void setup ( int _id  , float x , float y ) ;
+		void setup ( int _id  , ofPoint p  ) ;
+        void setup ( int _id  , float x , float y , float z  = 0 ) ;
         void update ( ) ;
         void draw ( ) ;
 
         float getX( ) { return position.x  ; }
         float getY( ) { return position.y ; }
+		float getZ( ) { return position.z ; } 
         int getCursorID( ) { return id ; }
 
         void onDown ( ofPoint p ) ;

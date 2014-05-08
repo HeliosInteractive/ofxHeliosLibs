@@ -23,6 +23,8 @@ class ofxAlphaStackItem
         vector < ofxAlphaStackItem * > children ; 
 
 		string getDebugString() ; 
+		void drawChildren( ) ; 
+		virtual void draw( ) { }  
     
 
     protected:

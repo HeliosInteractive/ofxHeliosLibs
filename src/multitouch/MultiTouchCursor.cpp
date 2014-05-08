@@ -10,11 +10,15 @@ MultiTouchCursor::~MultiTouchCursor()
     //dtor
 }
 
-void MultiTouchCursor::setup (  int _id ,  float _x , float _y )
+void MultiTouchCursor::setup ( int _id  , ofPoint p  ) 
+{
+	setup( _id , p.x , p.y , p.z ) ;
+}
+
+void MultiTouchCursor::setup (  int _id ,  float _x , float _y , float _z )
 {
     id = _id ;
-	position.x = _x ; 
-	position.y = _y ; 
+	position = ofPoint( _x , _y , _z ) ; 
     bDrag = false;
 }
 
