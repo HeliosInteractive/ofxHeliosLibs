@@ -14,11 +14,14 @@ void VideoPlayer::setup ( ofRectangle bounds )
 	contentRect = bounds ; 
     alpha = 0.0 ;
 	//bEventAdded = false ; 
-	seekBarArea = ofRectangle( 225 , contentRect.height - 50 , contentRect.getWidth() - 250 , 50 )  ;
+	float seekAreaPadding = 25 ; 
+	float seekX = playButton.image.getWidth() + playButton.x + seekAreaPadding ; 
+	seekBarArea = ofRectangle( seekX , contentRect.height - 50 , contentRect.getWidth() - seekX - seekAreaPadding  , 50 )  ;
 	children.push_back( &playButton ) ; 
 	children.push_back( &pauseButton ) ;
-	children.push_back( &resetButton ) ; 
 	children.push_back( &closeButton ) ; 
+//	children.push_back( &timeline ) ; 
+	children.push_back( &controlsBG ) ;
 
 	bIsDragScrubbing = false ; 
 }
@@ -26,35 +29,28 @@ void VideoPlayer::setup ( ofRectangle bounds )
 void VideoPlayer::inputDown( float x , float y )
 {
 	
-    if ( playButton.hitTest( x , y ) )
+    if ( playButton.alpha == 1.0f && playButton.hitTest( x , y ) )
     {
         video.play() ;
 		ofSetFrameRate( 30 ) ; 
-        pauseButton.alpha = 0.5f ;
+        pauseButton.alpha = 0.0f ;
         playButton.alpha = 1.0f ;
 
-		Tweenzor::add( &playButton.alpha , playButton.alpha , 0.5f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
+		Tweenzor::add( &playButton.alpha , playButton.alpha , 0.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
 		Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 1.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
 
     }
-    if ( pauseButton.hitTest( x , y ) )
+    if ( pauseButton.alpha == 1.0f && pauseButton.hitTest( x , y ) )
     {
         if ( video.isPlaying() )
         {
 			video.setPaused( true ) ; 
             video.previousFrame() ;
 			Tweenzor::add( &playButton.alpha , playButton.alpha , 1.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
-			Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 0.5f , 0.0f , 0.25f , EASE_OUT_SINE ) ;
+			Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 0.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ;
         }
     }
-    if ( resetButton.hitTest( x , y ) )
-    {
-        video.firstFrame() ;
-        video.play() ;
-		Tweenzor::add( &playButton.alpha , playButton.alpha , 0.5f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
-		Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 1.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
-    }
-    if ( closeButton.hitTest( x , y ) )
+    if ( closeButton.alpha == 1.0f && closeButton.hitTest( x , y ) )
     {
         stop() ;
     }
@@ -73,7 +69,7 @@ void VideoPlayer::inputDrag( float x , float y )
 		{
 			video.setPaused( true ) ;
 			Tweenzor::add( &playButton.alpha , playButton.alpha , 1.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
-			Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 0.5f , 0.0f , 0.25f , EASE_OUT_SINE ) ;
+			Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 0.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ;
 		}
 		float position = ofMap( x , seekBarArea.x , seekBarArea.x + seekBarArea.getWidth() , 0.0f , 1.0f , true ) ; 
 		scrubPosition = position ; 
@@ -102,7 +98,7 @@ void VideoPlayer::inputRelease( float x , float y )
 	if ( bIsDragScrubbing == true ) 
 	{
 		video.play( ) ; 
-		Tweenzor::add( &playButton.alpha , playButton.alpha , 0.5f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
+		Tweenzor::add( &playButton.alpha , playButton.alpha , 0.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
 		Tweenzor::add( &pauseButton.alpha , pauseButton.alpha , 1.0f , 0.0f , 0.25f , EASE_OUT_SINE ) ; 
 	}
 	bIsDragScrubbing = false ; 
@@ -126,52 +122,80 @@ void VideoPlayer::update ( )
 
 void VideoPlayer::draw ( )
 {
+	
 	if ( alpha == 0 ) return ;
 	ofPushStyle() ; 
-	ofEnableAlphaBlending( ) ; 
+		ofEnableAlphaBlending( ) ; 
 
-	ofPushMatrix( ) ; 
-	ofTranslate( contentRect.x, contentRect.y ) ; 
+		ofPushMatrix( ) ; 
+			ofTranslate( contentRect.x, contentRect.y ) ; 
 
-	float scale = (float)videoTexture.getWidth() / (float)contentRect.getWidth() ;
-	ofPushMatrix( ) ; 
-    ofSetColor( 255 , getOFAlpha() ) ;
-	//video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() );
-	videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
-	
-    //ofSetColor( 255 , videoAlpha * 255.0f ) ;
-    playButton.draw( ) ;
-    pauseButton.draw( ) ;
-    resetButton.draw( ) ;
-    closeButton.draw( ) ;
+			float scale = (float)videoTexture.getWidth() / (float)contentRect.getWidth() ;
 
-	ofSetColor( 0 , (110.0f / 255.0f) * getOFAlpha() ) ;
-    ofRect( 0 , contentRect.height - 50 , contentRect.width , 50 ) ;
-
-	float normalizedWidth = 0 ; 
-	if ( video.isLoaded() ) 
-		normalizedWidth = video.getPosition() * seekBarArea.getWidth() ; 
-	float normalizedX = seekBarArea.x + normalizedWidth ;
-	float radius = 15 ; 
-
-	ofSetColor( 43 , 146 , 179 , getOFAlpha() * 0.75f ) ;
-	ofPushStyle() ;
-		ofSetRectMode( OF_RECTMODE_CORNER ) ; 
-		float barHeight = radius * .5 ; 
-		ofRect( seekBarArea.x , seekBarArea.y + seekBarArea.getHeight() / 2  - barHeight / 2 , normalizedWidth , barHeight  ) ; 
-
-		ofSetRectMode( OF_RECTMODE_CORNER ) ;
-			ofEnableSmoothing() ; 
-			
-			ofSetColor( 43 , 146 , 179 , getOFAlpha() ) ;
-			ofCircle(  normalizedX , seekBarArea.y + seekBarArea.getHeight() / 2 , radius ) ; 
-			ofNoFill() ; 
 			ofSetColor( 255 , getOFAlpha() ) ;
-			ofSetLineWidth( 2 ) ; 
-			ofEnableSmoothing() ; 
-			ofCircle(  normalizedX , seekBarArea.y + seekBarArea.getHeight() / 2  , radius ) ; 
+			//video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() );
+			videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
+	
+			controlsBG.draw( ) ;
+			//controlsBG.draw( ) ;
+			//controlsBG.draw( ) ;
+			//timeline.draw( ) ; 
+			
+			/*
+			Timeline 
+			4 wide , 20 tall , every 10 pixels
+			30% white 
+*/
+			float midSeekY = ofGetHeight() - controlsBG.image.getHeight()/2 ; 
+			ofPushMatrix() ; 
+				ofTranslate( seekBarArea.x , 0 ) ; 
+				ofSetColor( 255.0f * 0.5f , controlsBG.getOFAlpha() ) ;
+				int tickY = midSeekY; // seekBarArea.getHeight() / 2 ; 
+				int tSpacing = 10 ; 
+				int tHeight = 10 ; 
+				int tWidth = 4 ; 
+				int numTicks = floor( seekBarArea.getWidth() / tSpacing ) - 1 ; 
+				
+				for ( int i = 0; i < numTicks ; i++ ) 
+				{
+					ofRect( i * tSpacing , (int) (tickY - floor( tHeight/2 ) + 1 ) , tWidth, (int) tHeight  ) ;
+				}
+			ofPopMatrix() ;
+			//ofSetColor( 255 , videoAlpha * 255.0f ) ;
+			playButton.draw( ) ;
+			pauseButton.draw( ) ;
+			//resetButton.draw( ) ;
+			closeButton.draw( ) ;
 
-		ofPopStyle() ; 
+			//ofSetColor( 0 , (110.0f / 255.0f) * getOFAlpha() ) ;
+			//ofRect( 0 , contentRect.height - 50 , contentRect.width , 50 ) ;
+
+			float normalizedWidth = 0 ; 
+			if ( video.isLoaded() ) 
+				normalizedWidth = video.getPosition() * seekBarArea.getWidth() ; 
+			float normalizedX = seekBarArea.x + normalizedWidth ;
+			float radius = 15 ; 
+
+			ofSetColor( 43 , 146 , 179 , getOFAlpha() ) ; // * 0.75f ) ;
+			ofPushStyle() ;
+				ofSetRectMode( OF_RECTMODE_CORNER ) ; 
+				float barHeight = tHeight ; //radius * .5 + 2 ; 
+				ofRect( seekBarArea.x , midSeekY  - barHeight / 2 , normalizedWidth , barHeight  ) ; 
+
+				ofSetRectMode( OF_RECTMODE_CORNER ) ;
+				ofEnableSmoothing() ; 
+			
+				ofSetColor( 43 , 146 , 179 , getOFAlpha() ) ;
+				ofCircle(  normalizedX , midSeekY , radius ) ; 
+				ofNoFill() ; 
+				ofSetColor( 255 , getOFAlpha() ) ;
+				ofSetLineWidth( 2 ) ; 
+				ofEnableSmoothing() ; 
+				ofCircle(  normalizedX , midSeekY  , radius ) ; 
+ 
+			ofPopStyle() ; 
+
+		ofPopMatrix() ;
 	ofPopStyle() ; 
 }
 
@@ -210,14 +234,20 @@ void VideoPlayer::playMovie( string _path )
 	Tweenzor::add( &alpha , 0.0f , 1.0f , 0.0f , inc , EASE_OUT_QUAD ) ;
 
 	closeButton.alpha = 0 ; 
-	resetButton.alpha = 0 ; 
+	//resetButton.alpha = 0 ; 
 	pauseButton.alpha = 0 ; 
 	playButton.alpha = 0 ; 
 
 	Tweenzor::add( &closeButton.alpha , 0.0f , 1.0f , inc , inc , EASE_OUT_QUAD ) ;
-	Tweenzor::add( &resetButton.alpha , 0.0f , 1.0f , inc * 2.0f , inc , EASE_OUT_QUAD ) ;
+	//Tweenzor::add( &resetButton.alpha , 0.0f , 1.0f , inc * 2.0f , inc , EASE_OUT_QUAD ) ;
 	Tweenzor::add( &pauseButton.alpha , 0.0f , 1.0f , inc * 3.0f , inc , EASE_OUT_QUAD ) ;
-	Tweenzor::add( &playButton.alpha  , 0.0f , 0.5f , inc * 4.0f , inc , EASE_OUT_QUAD ) ;
+	Tweenzor::add( &controlsBG.alpha  , 0.0f , 1.0f , inc * 1.0f , inc , EASE_OUT_QUAD ) ;
+	//Tweenzor::add( &timeline.alpha  , 0.0f , 1.0f , inc * 2.0f , inc , EASE_OUT_QUAD ) ;
+		//controlsBG.draw( ) ;
+	//		timeline.draw( ) ; 
+
+	if ( bDisableTimeout == true ) 
+		IdleInputManager::Instance()->disable() ; 
 
 }
 
@@ -227,12 +257,19 @@ void VideoPlayer::stop()
     video.close() ;
     Tweenzor::add( &alpha , alpha , 0.0f , 0.0f , 0.5f , EASE_OUT_QUAD ) ;
 	ofSetFrameRate( 30 ) ; 
+
+	if ( bDisableTimeout == true ) 
+	{
+		IdleInputManager::Instance()->enable() ; 
+		
+	}
+	IdleInputManager::Instance()->input( ) ; 
 }
 
 VideoPlayer::~VideoPlayer()
 {
     video.close() ;
-    timeline.clear() ;
+    //timeline.clear() ;
     restart.clear() ;
 }
 

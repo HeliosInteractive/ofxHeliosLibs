@@ -13,6 +13,7 @@
 #include "ofxAlphaStackItem.h"
 #include "ofxSimpleImageButton.h"
 #include "Tweenzor.h"
+#include "IdleInputManager.h"
 
 class VideoPlayer : public ofxAlphaStackItem , public ofThread
 {
@@ -28,13 +29,15 @@ class VideoPlayer : public ofxAlphaStackItem , public ofThread
     string path ;
     ofRectangle contentRect ;
 
-    ofImage timeline ;
+    //ofImage timeline ;
     ofImage restart ;
 
     ofxSimpleImageButton playButton ;
     ofxSimpleImageButton pauseButton ;
-    ofxSimpleImageButton resetButton ;
+    //ofxSimpleImageButton resetButton ;
     ofxSimpleImageButton closeButton ;
+	//ofxMatrixTransformImage timeline ; 
+	ofxMatrixTransformImage controlsBG ; 
 
 	ofRectangle seekBarArea ;  
 	bool bIsDragScrubbing ; 
@@ -53,5 +56,6 @@ class VideoPlayer : public ofxAlphaStackItem , public ofThread
 	bool bMouseDragged ; 
 	float scrubPosition ; 
 
+	bool bDisableTimeout ; 
 };
 #endif /* defined(__emptyExample__VideoPlayer__) */
