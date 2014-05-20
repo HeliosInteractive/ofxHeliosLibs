@@ -189,14 +189,13 @@ void MultiTouchActions::updateRotation(){
     tempAngle = ((180/PI) * tempAngle)/objTouch.size();
     deltaDeg = ofLerp(deltaDeg, tempAngle*-1, 0.2f);
 
-
 	if ( objTouch.size() == 2 ) 
 	{
 		ofPoint diff = getNormal() - startNormal ; 	
 		calcNormal = storedNormal + diff ;
 	}
-
 }
+
 void MultiTouchActions::updateTime(){
     if (cursorTime < 0){
         cursorTime = ofGetElapsedTimef();
@@ -220,15 +219,13 @@ void MultiTouchActions::touchDrag( ofPoint p , int id )
 }
 	
 
-void MultiTouchActions::touchRelease( ofPoint p , int id )  
+void MultiTouchActions::touchUp( ofPoint p , int id )  
 {
 	MultiTouchCursor c ; 
 	c.setup( id , p.x , p.y ) ; 
-	touchRelease( c ) ; 
+	touchUp( c ) ; 
 }
 	
-
-
 void MultiTouchActions::rotateToNormal(ofVec3f normal) 
 {
 	//asnormal.normalize();
@@ -261,7 +258,7 @@ void MultiTouchActions::touchDrag(MultiTouchCursor & tcur){
         }
     }
 }
-void MultiTouchActions::touchRelease(MultiTouchCursor & tcur){
+void MultiTouchActions::touchUp(MultiTouchCursor & tcur){
     //remove touch from object stack
     float timeCheck = elapsedTime;
     if (objTouch.size() != 0){

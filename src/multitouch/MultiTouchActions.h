@@ -13,16 +13,20 @@ class MultiTouchActions {
 
 		void touchDown(MultiTouchCursor & tcur);
         void touchDrag(MultiTouchCursor & tcur);
-        void touchRelease(MultiTouchCursor & tcur);
+        void touchUp(MultiTouchCursor & tcur);
 		
 		void touchDown( ofPoint p , int id ) ; 
 		void touchDrag( ofPoint p , int id ) ; 
-		void touchRelease( ofPoint p , int id ) ; 
+		void touchUp( ofPoint p , int id ) ; 
+
+		void touchDown( float x , float y , int id ) { touchDown( ofPoint ( x , y ) , id ) ; } 
+		void touchDrag( float x , float y , int id ) { touchDrag( ofPoint ( x , y ) , id ) ; } 
+		void touchUp( float x , float y , int id )   { touchUp( ofPoint ( x , y ) , id ) ; } 
+
         void reset();
 
 		ofPoint delta ; 
 		float deltaDeg ; 
-
 
         //ofPoint normal ; 
         ofPoint calcNormal ;
@@ -63,7 +67,7 @@ class MultiTouchActions {
 
         int firstPass, fingerAdded, fingerRemoved, isLerp, firstScale;
 
-        vector <ofVec2f> fAngles;
+        vector < ofPoint > fAngles;
 
         void updateTranslate();
         void updateRotation();

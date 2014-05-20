@@ -129,13 +129,16 @@ void VideoPlayer::draw ( )
 
 		ofPushMatrix( ) ; 
 			ofTranslate( contentRect.x, contentRect.y ) ; 
-
+			
 			float scale = (float)videoTexture.getWidth() / (float)contentRect.getWidth() ;
 
-			ofSetColor( 255 , getOFAlpha() ) ;
+			ofSetColor( 255 , getOFAlpha() ) ;	
 			//video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() );
-			videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
-	
+			//videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
+			//if ( bIsDragScrubbing == true ) 
+				videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
+			//else
+			//	video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ;
 			controlsBG.draw( ) ;
 			//controlsBG.draw( ) ;
 			//controlsBG.draw( ) ;
@@ -180,7 +183,7 @@ void VideoPlayer::draw ( )
 			ofPushStyle() ;
 				ofSetRectMode( OF_RECTMODE_CORNER ) ; 
 				float barHeight = tHeight ; //radius * .5 + 2 ; 
-				ofRect( seekBarArea.x , midSeekY  - barHeight / 2 , normalizedWidth , barHeight  ) ; 
+				ofRect( seekBarArea.x , midSeekY  - barHeight / 2 , normalizedWidth , barHeight + 1  ) ; 
 
 				ofSetRectMode( OF_RECTMODE_CORNER ) ;
 				ofEnableSmoothing() ; 

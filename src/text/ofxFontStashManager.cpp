@@ -39,9 +39,13 @@ ofxFontStash * ofxFontStashManager::getFontInternal ( string fontPath )
 	if (fontTable.find(fontkey) == fontTable.end())
 	{
 		ofxFontStash* newFont = new ofxFontStash();
-		newFont->setup( localPath , 1.0f ); 
+		bool bResult = newFont->setup( localPath , 1.25f ); 
+		if ( !bResult ) 
+			ofLogError( "!! FONT NOT COMPATIBLE !!" ) << " the following font failed to load " << localPath << endl ;
+		else
+			ofLogNotice("Font Cached") << fontPath<< " @ "<<fontTable.size()<<" fonts cached total.";
 		fontTable[fontkey] = newFont;
-		ofLogNotice("Font Cached") << fontPath<< " @ "<<fontTable.size()<<" fonts cached total.";
+		
 	}
 
 	return fontTable[fontkey];
