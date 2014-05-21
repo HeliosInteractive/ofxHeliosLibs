@@ -1,19 +1,37 @@
 # ofxHeliosLibs
 
-Set of libraries developed for Open Frameworks by Helios Interactive Technologies, Inc. Originally created for projects, we now use them as the base for most UIs.
+Set of libraries developed for Open Frameworks by Helios Interactive Technologies, Inc. Originally created for projects, we now abstracted them to be more flexible.
 
-* AlphaStackItem is used to calculate transparency on nested of combined objects, similar to Flash Movie Clips. **example currently broken**
+Groups 
+================
 
-* TransitionItem is used to coordinate items transitioning in and out.
+* /content/ is all legacy code for working with certain content types, mostly still exists for backwards compatibility for legacy projects
 
-* MatrixTransformObject is used for 2D UIs to allow for scaling, positioning, and rotation, similar to Flash Movie Clips.
+* /ofxAlphaStack/ is used to calculate transparency on nested of combined objects, similar to Flash Movie Clips.
 
-* SoundBank is used to play one of random sounds for a given action.
+* /interactive/ contains a wide array of classes including : 
+	
+	DragScroller - make elastic scrolling functionality
+	ofxMatrixTransformObject - an object with a screen position, scale, rotation
+	ofxMatrixTransformImage - a versatile image with ofxAlphaStackItem + ofxMatrixTransformObject
+	ofxImageButton - an easy to setup button with hit states
+	VideoPlayer - using threads to scrub frames during seeking for performance
+	
+* /mediaBanks/
 
-* MultiTouchActions is a hub for calculating the three main multitouch gestures (scale, rotate, translate) 
+	SoundBank - load and play from a predetermined group of sounds
+	VideoBank - load, play, and draw a predetermined group of videos
 
-* MultiTouchCursor is a wrapper for normalized input data so we don't have to switch code between TUIO + Windows 7 for instance.
+* /gesture/ - a few utilities and UI classes for implemented gesture cursors + interactions
 
-* MultiTouchObject is a basic example class for multitouch input data.
+* /pages/ - simple framework for linear experience that mirror webpage like flows
 
-* ofxSync downloads content from a given set of URLs to a local directory. See [ofxSync.md](src/ofxSync.md) for more info.
+* /multitouch/ - utilities for developing multitouch gesture content
+
+* /utils/ - general utilities for open Frameworks
+
+* /text/ - collection of classes for Text and Font Rendering in OF. Currently implementing ofxFontStash
+
+* /threaded_utils/ - collection of utilities for loading / exporting files via a thread.
+
+* /ofxSync/ downloads content from a given set of URLs to a local directory. See [ofxSync.md](src/ofxSync/ofxSync.md) for more info.
