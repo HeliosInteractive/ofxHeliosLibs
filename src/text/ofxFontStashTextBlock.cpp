@@ -35,8 +35,8 @@ void ofxFontStashTextBlock::draw( )
 	if ( font == NULL  ) return ; 
 	
 	draw( x , y ) ; 
-	ofSetColor( 255 , 0 , 0 ) ; 
-	ofCircle( x , y , 5 ) ; 
+	//ofSetColor( 255 , 0 , 0 ) ; 
+	//ofCircle( x , y , 5 ) ; 
 }
 
 void ofxFontStashTextBlock::draw( float x , float y ) 
