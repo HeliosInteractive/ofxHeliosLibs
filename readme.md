@@ -12,14 +12,19 @@ Groups
 * /interactive/ contains a wide array of classes including : 
 	
 	DragScroller - make elastic scrolling functionality
+
 	ofxMatrixTransformObject - an object with a screen position, scale, rotation
+
 	ofxMatrixTransformImage - a versatile image with ofxAlphaStackItem + ofxMatrixTransformObject
+
 	ofxImageButton - an easy to setup button with hit states
+
 	VideoPlayer - using threads to scrub frames during seeking for performance
 	
 * /mediaBanks/
 
 	SoundBank - load and play from a predetermined group of sounds
+
 	VideoBank - load, play, and draw a predetermined group of videos
 
 * /gesture/ - a few utilities and UI classes for implemented gesture cursors + interactions
@@ -35,3 +40,7 @@ Groups
 * /threaded_utils/ - collection of utilities for loading / exporting files via a thread.
 
 * /ofxSync/ downloads content from a given set of URLs to a local directory. See [ofxSync.md](src/ofxSync/ofxSync.md) for more info.
+
+* /ofxAtomicLog/n threaded safe logger developer as a part of ofxSync
+
+* /loading/ legacy code for managing data being loaded over ofLoadUrlAsync() 
