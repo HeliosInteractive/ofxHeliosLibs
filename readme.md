@@ -41,6 +41,6 @@ Groups
 
 * /ofxSync/ downloads content from a given set of URLs to a local directory. See [ofxSync.md](src/ofxSync/ofxSync.md) for more info.
 
-* /ofxAtomicLog/n threaded safe logger developer as a part of ofxSync
+* /ofxAtomicLog/thread safe logger developer as a part of ofxSync
 
 * /loading/ legacy code for managing data being loaded over ofLoadUrlAsync() 
