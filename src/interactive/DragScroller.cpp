@@ -16,7 +16,7 @@ void DragScroller::setupScrollVertical( float _minY , float _maxY )
 {
 	minY = _minY ; 
 	maxY = _maxY ; 
-	scrollY = _minY ; 
+	scrollY = _minY ;
 	bScrollVertical = true ; 
 	ofLogNotice( "DragScroller::setupScrollVertical" ) << "range : " << minY << " <-> " << maxY ; 
 }
@@ -35,7 +35,7 @@ void DragScroller::reset( )
 	bDragging = false ; 
 	if ( bScrollHorizontal ) 
 	{
-		scrollX = minX ; 
+		scrollX = maxX ; 
 		startScrollX = scrollX ; 
 		scrollY = dragArea.y ; 
 	}

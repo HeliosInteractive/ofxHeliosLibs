@@ -7,6 +7,5 @@
 #include "VideoContent.h"
 #include "TextImageContent.h"
 #include "VideoContentReveal.h"
-#include "VideoTimelineContent.h"
 
 #endif // CONTENTTYPES_H

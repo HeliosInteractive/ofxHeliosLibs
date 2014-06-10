@@ -36,15 +36,19 @@ void ofxMatrixTransformImage::draw ( )
 	popMatrix( ) ;
 }
 
-void ofxMatrixTransformImage::loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha )
+bool ofxMatrixTransformImage::loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha )
 {
+	bool bResult = false ;
 	if ( path != "" ) 
-		image.loadImage( path ) ;
+		bResult = image.loadImage( path ) ;
+
 	x = _x ;
 	y = _y ;
     _anchor = anchor ;
     alpha = _alpha ;
 	imageFilePath = path ; 
+
+	return bResult ; 
 }
 
 void ofxMatrixTransformImage::setImageProperties( string path , float _x , float _y , ofPoint anchor , float _alpha  )

@@ -2,7 +2,8 @@
 #define TimelineIcon___H
 
 #include "ofMain.h"
-#include "ofxTextSuite.h"
+//#include "ofxTextSuite.h"
+#include "ofxFontStashTextBlock.h"
 #include "ColorPalette.h"
 
 class TimelineIcon
@@ -13,7 +14,7 @@ class TimelineIcon
         float x , y ;
         ofRectangle bounds ;
         ofImage image ;
-        ofxTextBlock labelBlock ;
+		ofxFontStashTextBlock labelBlock ;
         bool bActive ;
 
 
@@ -26,8 +27,9 @@ class TimelineIcon
             image.setAnchorPercent( 0.5 , 0.5 ) ;
             bounds = ofRectangle( x + ( image.width/-2 ) , y + ( image.height/-2)  , image.width , image.height ) ;
             cout<< " x : " << bounds.x << " ,  y : " << bounds.y << " W " << image.width << " , h : " << image.height << endl ;
-            labelBlock.init ( "type/Whitney-Book-Bas.otf" , 15 , 1.0f ) ;
-            labelBlock.setText( label ) ;
+            //labelBlock.init ( "type/Whitney-Book-Bas.otf" , 15 , 1.0f ) ;
+			labelBlock.setup( "type/Whitney-Book-Bas.ttf" , 1.2 , label , 18 , 0 , 0 , ofColor::white ) ; 
+            //labelBlock.setText( label ) ;
         }
 
         void update ( )
@@ -44,7 +46,7 @@ class TimelineIcon
                 ofSetColor( 255 , 255 , 255 , 215 ) ;
             else
                 ofSetColor( gold , 255 ) ;
-            labelBlock.drawCenter( bounds.x , bounds.y ) ;
+            labelBlock.draw( bounds.x - labelBlock.getWidth()/2 , bounds.y ) ;
         }
 
     protected:

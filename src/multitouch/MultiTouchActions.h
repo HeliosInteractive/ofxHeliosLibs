@@ -51,6 +51,7 @@ class MultiTouchActions {
         vector <MultiTouchCursor> objTouch;
 		ofPoint offset ; 
 
+		string toString() ; 
     protected:
 
     private:

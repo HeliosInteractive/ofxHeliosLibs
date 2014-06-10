@@ -9,6 +9,8 @@ void MultiTouchActions::setup(){
 
     minScale = 0.1f ;
     maxScale = 1.0f ;
+
+
 }
 //--------------------------------------------------------------
 void MultiTouchActions::update(){
@@ -283,3 +285,10 @@ void MultiTouchActions::touchUp(MultiTouchCursor & tcur){
     }
 }
 
+//Easy function for debugging and outputting thigns
+string MultiTouchActions::toString() 
+{
+	stringstream ss ; 
+	ss << "x : " << offset.x << ", y : " << offset.y << " - rotation : " << deltaDeg << " - scale : " << scale << endl ; 
+	return ss.str() ; 
+}

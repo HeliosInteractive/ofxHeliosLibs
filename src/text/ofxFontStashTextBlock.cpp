@@ -7,7 +7,7 @@ ofxFontStashTextBlock::ofxFontStashTextBlock( )
 	y = 0 ; 
 	numLines = 1 ; 
 	maxNumLines = 50 ; 
-	columnWidth = 100 ; 
+	columnWidth = 400 ; 
 	format = SINGLE_LINE ; 
 	font = NULL ; 
 
@@ -27,7 +27,9 @@ void ofxFontStashTextBlock::setup( string fontPath , float _lineSpacing , string
 	color = _color ; 
 	ofxAlphaStackItem::setup( ) ; 
 	alignment = LEFT ; 
-	draw( ) ; 
+	//draw( ) ; 
+	if ( text.size() > 0 && font != NULL ) 
+		boundingBox = font->getBBox( text , fontSize, x , y ) ; //, columnWidth ) ; 
 }
 
 void ofxFontStashTextBlock::draw( ) 
@@ -35,10 +37,38 @@ void ofxFontStashTextBlock::draw( )
 	if ( font == NULL  ) return ; 
 	
 	draw( x , y ) ; 
-	//ofSetColor( 255 , 0 , 0 ) ; 
-	//ofCircle( x , y , 5 ) ; 
+	
 }
 
+void ofxFontStashTextBlock::drawDebug( float xOffset , float yOffset ) 
+{
+	ofPushMatrix() ; 
+		ofTranslate( x + xOffset , y + yOffset ) ; 
+
+		
+		ofSetColor( 255 , 0 , 0 , getOFAlpha() ) ; 
+		ofCircle( 0 , 0 , 8 ) ; 
+
+		ofPushMatrix() ; 
+			switch ( alignment ) 
+			{
+				case LEFT : 
+					//default is drawing left...
+					break ; 
+
+				case CENTER: 
+					ofTranslate( -boundingBox.getWidth() , 0 ) ; 
+					break; 
+			}
+			ofNoFill() ; 
+			ofSetColor( ofColor::yellow ) ; 
+			ofSetLineWidth( 3 ) ; 
+			ofRect( 0 , 0 , boundingBox.getWidth() , boundingBox.getHeight() ) ; 
+			ofFill() ; 
+		ofPopMatrix() ; 
+
+	ofPopMatrix(); 
+}
 void ofxFontStashTextBlock::draw( float x , float y ) 
 {
 	if ( font == NULL  ) return ; 

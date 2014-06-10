@@ -1,7 +1,8 @@
 #pragma once
 
 #include "ofMain.h"
-class SlidingDoorRect
+#include "ofxAlphaStackItem.h"
+class SlidingDoorRect : public ofxAlphaStackItem
 {
 	public :
 		SlidingDoorRect( )
@@ -25,19 +26,23 @@ class SlidingDoorRect
 
 		float frameLineWidth ;
         int lineWidth ;
-
-		void setup ( )
+		bool bDrawStroke ;
+		
+	
+		void setup ( ofColor _fillColor , ofRectangle _bounds ,  bool _bDrawStroke = true , ofColor _strokeColor = ofColor::white , float strokeWidth = 3 )
 		{
+			ofxAlphaStackItem::setup() ; 
 			bounds = ofRectangle ( 0 , 0 , 200 , 100 ) ;
 			radius = 25.0f ;
-			strokeColor = ofColor ( 126 , 139 , 165 ) ;
+			strokeColor = _strokeColor ; 
 			bHorizontal= false ;
-			//color = ofColor ( 255 , 25 , 109 ) ;
 			strokeAlpha = 255.0f ;
 			fillAlpha = 0.0f ;
-			fillColor = ofColor ( 9 , 15 , 34 ) ;
+			fillColor = _fillColor ; 
 			frameLineWidth = 1.0f ;
-			lineWidth= 3 ;
+			lineWidth= strokeWidth ;
+			bDrawStroke = _bDrawStroke ; 
+			setupBounds ( _bounds ) ;
 		}
 
 
@@ -57,29 +62,31 @@ class SlidingDoorRect
 		void setupBounds ( ofRectangle rect )
 		{
 			origBounds  = rect ;
-			bounds = rect ;
-		//	cout << "bounds is now " << rect.x << " , " << rect.y << " , " << rect.width << " , " << rect.height << endl ;
-
+			bounds = rect ; 
 		}
 
 		void draw ( )
 		{
-
+			if ( alpha == 0 ) return ; 
 			ofFill() ;
 			ofEnableAlphaBlending( ) ;
-			ofSetColor ( fillColor.r , fillColor.g , fillColor.b , fillAlpha ) ;
-			roundedRect ( bounds.x , bounds.y , bounds.width , bounds.height  , radius ) ;
+			ofSetColor ( fillColor.r , fillColor.g , fillColor.b , getOFAlpha() ) ;
+			roundedRect( bounds.x , bounds.y , bounds.width , bounds.height , radius ) ;
+/*
+			if ( bDrawStroke ) 
+			{
+				ofNoFill() ;
+				ofSetColor ( strokeColor.r , strokeColor.g , strokeColor.b ,  getOFAlpha()  ) ;
+				ofSetLineWidth( frameLineWidth ) ;
+				roundedRect( bounds.x , bounds.y ,  bounds.width , bounds.height  , radius ) ;
 
-			ofNoFill() ;
-			ofSetColor ( strokeColor.r , strokeColor.g , strokeColor.b , strokeAlpha ) ;
-			ofSetLineWidth( frameLineWidth ) ;
-			roundedRect (bounds.x , bounds.y ,  bounds.width , bounds.height  , radius ) ;
-
-            ofSetLineWidth( 1 ) ;
-			ofFill( ) ;
-			ofSetColor ( 255 , 255 , 255 , 255 ) ;
+				ofSetLineWidth( 1 ) ;
+				ofFill( ) ;  
+			}*/
+			//ofSetColor ( 255 , 255 , 255 , 255 ) ;
 		}
 
+		
 		void roundedRect(float x, float y, float w, float h, float r)
 		{
 			ofEnableSmoothing() ;
@@ -114,11 +121,10 @@ class SlidingDoorRect
 		};
 
 
-		ofRectangle* getBounds ( ) { return &bounds ; }
+		ofRectangle* getBoundsRef ( ) { return &bounds ; }
+		ofRectangle getBounds ( ) { return bounds ; }
 		ofRectangle getOriginalBounds ( ) { return origBounds ; }
 
-
-	private :
 		ofRectangle origBounds ;
 		ofRectangle bounds ;
 

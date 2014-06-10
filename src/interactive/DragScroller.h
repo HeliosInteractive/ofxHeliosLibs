@@ -27,7 +27,7 @@ public :
 	float minY , maxY , scrollY , startScrollY ; 
 	float minX , maxX , scrollX , startScrollX ; 
 	float dragInterpolationTime ; 
-
+	
 	void setupScrollVertical( float minY , float maxY ) ; 
 	void setupScrollHorizontal( float minX , float maxX ) ; 
 	stringstream debug ; 

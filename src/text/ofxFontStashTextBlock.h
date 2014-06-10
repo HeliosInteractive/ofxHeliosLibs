@@ -30,11 +30,11 @@ public :
 	}
 	
 	void setup( string fontPath , float lineSpacing , string text , float fontSize, float _x , float _y , ofColor color ) ;
-	//void setup( ofxFontStash * fontStash , float lineSpacing , string text , float fontSize, float _x , float _y , ofColor color ) ;
-
 	void draw( ) ;
 	void draw( float x , float y ) ;
+	void drawDebug( float xOffset = 0 , float yOffset = 0 ) ; 
 	void wrapTextX ( float maxX , float maxNumLines = -1 ) ; 
+
 
 	string text ; 
 	float x , y ; 

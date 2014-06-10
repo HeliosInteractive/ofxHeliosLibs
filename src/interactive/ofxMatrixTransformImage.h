@@ -14,7 +14,7 @@ class ofxMatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTrans
 
 		void setup ( ) ; 
 		void draw ( );
-		void loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f );
+		bool loadImage( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f );
         void setImageProperties( string path , float _x , float _y , ofPoint anchor , float _alpha = 0.0f  ) ;
 		void setImagePath ( string path ) 	;
 		bool isNewlyLoaded( ) ;
@@ -27,6 +27,9 @@ class ofxMatrixTransformImage : public ofxAlphaStackItem , public ofxMatrixTrans
 		 ofPoint _anchor ;
 		ofImage image ;
 		string imageFilePath ; 
+
+		float getWidth() { return image.getWidth() ; }
+		float getHeight() { return image.getHeight() ; }  
 		
 	
     

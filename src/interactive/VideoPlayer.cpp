@@ -111,7 +111,8 @@ void VideoPlayer::update ( )
 	if ( !video.isLoaded() || alpha == 0 ) return ; 
    
     video.update() ;
-	videoTexture.loadData( video.getPixelsRef() ) ; 
+	if ( bIsDragScrubbing == true ) 
+		videoTexture.loadData( video.getPixelsRef() ) ; 
     
 
 	if ( video.isLoaded() == true && video.getPosition() >= 0.98f )
@@ -134,11 +135,11 @@ void VideoPlayer::draw ( )
 
 			ofSetColor( 255 , getOFAlpha() ) ;	
 			//video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() );
-			//videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
-			//if ( bIsDragScrubbing == true ) 
+			videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
+			if ( bIsDragScrubbing == true ) 
 				videoTexture.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ; 
-			//else
-			//	video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ;
+			else
+				video.draw( 0 , 0 , contentRect.getWidth() , contentRect.getHeight() ) ;
 			controlsBG.draw( ) ;
 			//controlsBG.draw( ) ;
 			//controlsBG.draw( ) ;
@@ -207,7 +208,7 @@ void VideoPlayer::stopCompleteHandler( float * args )
     video.close() ;
 }
 
-void VideoPlayer::playMovie( string _path )
+void VideoPlayer::load( string _path )
 {
 	path = _path; 
 
@@ -226,7 +227,7 @@ void VideoPlayer::playMovie( string _path )
 		ofLogError( path ) << " did not load ! " ; 
 		return ; 
 	}
-	video.setUseTexture( false ) ; 
+	video.setUseTexture( true ) ; 
     video.play( ) ;
     //ofLog( OF_LOG_VERBOSE , " video loaded ! and now playing... " ) ;
     video.setLoopState( OF_LOOP_NONE ) ;

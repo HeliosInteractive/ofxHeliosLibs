@@ -14,6 +14,7 @@
 #include "ofxSimpleImageButton.h"
 #include "Tweenzor.h"
 #include "IdleInputManager.h"
+//#include "ofxWMFVideoPlayer.h"
 
 class VideoPlayer : public ofxAlphaStackItem , public ofThread
 {
@@ -21,7 +22,7 @@ class VideoPlayer : public ofxAlphaStackItem , public ofThread
     void setup ( ofRectangle bounds ) ;
     void update ( ) ;
     void draw ( ) ;
-    void playMovie( string path ) ; 
+    void load( string path ) ; 
     void stop( ) ;
 	
 

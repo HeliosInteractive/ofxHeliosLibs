@@ -4,7 +4,7 @@
 #include <BaseContent.h>
 #include "ImagePlus.h"
 //#include "ofGstVideoPlayer.h"
-
+#include "ofxWMFVideoPlayer.h"
 //#include "ofVideoPlayer_alpha.h"
 
 class VideoContent : public BaseContent
@@ -45,24 +45,21 @@ class VideoContent : public BaseContent
 
         bool updateFrameOnce ;
 
-        void setupMap( string path )
-        {
-            //playImage = ImagePlus ( path , ofVec2f ( 335 , -110 ) , 0 , 0 ) ;
-           // playImage.inheritAlpha = true ;
-           // playImage.setHitBounds ( ofRectangle ( playImage.x  , playImage..y , 300 , 220 )  ) ;
-        }
-
         bool bUseFboTexture ;
         ofFbo altTexture ;
         void createAltTexture( ) ;
+
+		ofFbo videoFbo ; 
         ofTexture getTextureReference( )
         {
             if ( bUseFboTexture == false )
-                return video.getTextureReference( ) ;
+                return videoFbo.getTextureReference( ) ;
             else
                 return altTexture.getTextureReference( ) ;
         }
 
+
+		void drawIntoTexture( ) ; 
 
         void transitionOut( float time = 0.25f, float delay = 0.0f ) ;
         void transitionIn ( float time = 0.25f, float delay = 0.0f ) ;
@@ -70,10 +67,11 @@ class VideoContent : public BaseContent
         void transitionOutComplete ( float * args ) ;
         void initialValues() ;
 
-        int getWidth( ) { return video.getWidth() ; }
-        int getHeight( ) { return video.getHeight() ; }
+        int getWidth( );
+        int getHeight( ) ;
+		//void unload( ) ; 
 
-        ofVideoPlayer video ;
+        ofxWMFVideoPlayer video ;
 
 
     protected:

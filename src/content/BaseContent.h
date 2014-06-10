@@ -78,10 +78,6 @@ class BaseContent : public ofxTransitionItem , public ofxMatrixTransformObject ,
 
         virtual bool hitTest( ofVec2f p , ofRectangle _bounds )
         {
-           // cout << "virtual hit test!" << endl ;
-           // cout << "is :" << bounds.x << " < " << p.x << " < " << bounds.width << " "
-           //return ( p.x > _bounds.x && p.x < _bounds.width && p.y > _bounds.y && p.y < bounds.height ) ;
-          // bool ofxMSAInteractiveObject::hitTest(int tx, int ty) {
             return (( p.x > _bounds.x ) && ( p.x < _bounds.x + _bounds.width) && ( p.y > _bounds.y ) && ( p.y  < _bounds.y + _bounds.height ));
         }
 
@@ -124,7 +120,7 @@ class BaseContent : public ofxTransitionItem , public ofxMatrixTransformObject ,
 
         virtual int getType( )
         {
-              return -1 ;
+             return cType ;
         }
 
     protected:
