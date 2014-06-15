@@ -18,11 +18,24 @@ void ofApp::setup(){
 
 	ofLogNotice( "Today's prize is : " ) << pd.toString() ; 
 	ofBackground( 15 ) ;
+
+	bCheckTodaysDate = false ; 
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
+	//In the event that the app runs over multiple days there needs to be a check that resets everything after midnight
+	if ( bCheckTodaysDate == true && ofGetSeconds() == 30 )
+    {
+        ofLog( OF_LOG_VERBOSE , "CHECKING THE DATE!" ) ;
+		prize.checkTodaysDate() ; 
+        bCheckTodaysDate = false ;
+    }
+    if ( ofGetSeconds() == 31 )
+    {
+        bCheckTodaysDate = true ;
+    }
 }
 
 //--------------------------------------------------------------

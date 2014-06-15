@@ -22,5 +22,7 @@ class ofApp : public ofBaseApp{
 
 
 		ofxPrizeGiveaway prize ; 
+
+		bool bCheckTodaysDate ; 
 		
 };
