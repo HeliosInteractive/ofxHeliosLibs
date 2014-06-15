@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\ofApp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxXmlSettings\src\ofxXmlSettings.cpp">
+      <Filter>addons\ofxXmlSettings\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxXmlSettings\libs\tinyxml.cpp">
+      <Filter>addons\ofxXmlSettings\libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxXmlSettings\libs\tinyxmlerror.cpp">
+      <Filter>addons\ofxXmlSettings\libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxXmlSettings\libs\tinyxmlparser.cpp">
+      <Filter>addons\ofxXmlSettings\libs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxCsv\src\ofxCsv.cpp">
+      <Filter>addons\ofxCsv\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ofxPrizing\ofxPrizeConfiguration.cpp">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ofxPrizing\ofxPrizeGiveaway.cpp">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ofxPrizing\ofxPrizeHub.cpp">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons">
+      <UniqueIdentifier>{71834F65-F3A9-211E-73B8-DC85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxXmlSettings">
+      <UniqueIdentifier>{877F005D-13E6-0592-1D97-F2E3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxXmlSettings\src">
+      <UniqueIdentifier>{CCB2AC63-49D2-977C-CFE8-AEAD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxXmlSettings\libs">
+      <UniqueIdentifier>{687714A8-1662-FA1C-261F-50F0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxCsv">
+      <UniqueIdentifier>{7D309272-D72D-88B2-EE38-CF23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxCsv\src">
+      <UniqueIdentifier>{7C4B1010-50E8-44FD-FA0B-A4E8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs">
+      <UniqueIdentifier>{9242C2C7-5A8A-77BD-7E09-BABE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs\src">
+      <UniqueIdentifier>{EA348405-DA09-A5A6-2EAE-C1F2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs\src\utils">
+      <UniqueIdentifier>{2ED4563F-0784-935E-44B0-74A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHeliosLibs\src\ofxPrizing">
+      <UniqueIdentifier>{496853AA-E25A-B299-F5A6-58B6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ofApp.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxXmlSettings\src\ofxXmlSettings.h">
+      <Filter>addons\ofxXmlSettings\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxXmlSettings\libs\tinyxml.h">
+      <Filter>addons\ofxXmlSettings\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxCsv\src\ofxCsv.h">
+      <Filter>addons\ofxCsv\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\utils\ofxCalendar.h">
+      <Filter>addons\ofxHeliosLibs\src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\utils\ofxHeliosUtils.h">
+      <Filter>addons\ofxHeliosLibs\src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxPrizing\ofxPrizeConfiguration.h">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxPrizing\ofxPrizeData.h">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxPrizing\ofxPrizeGiveaway.h">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxPrizing\ofxPrizeHub.h">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxPrizing\ofxPrizing.h">
+      <Filter>addons\ofxHeliosLibs\src\ofxPrizing</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="icon.rc" />
+  </ItemGroup>
+</Project>

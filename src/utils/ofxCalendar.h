@@ -32,12 +32,39 @@ public :
 		minute = ofGetMinutes() ; 
 	}
 
-	string log ( ) 
+
+	bool isToday( ) 
 	{
-		stringstream ss; 
-		
+		if ( year == ofGetYear() && month == ofGetMonth() && day == ofGetDay()  ) 
+			return true ; 
+		else 
+			return false ; 
+	}
+
+	string getFilePath( ) 
+	{
+		stringstream ss ; 
+		ss << year << "_" << month << "_" << day ; 
+		return ss.str() ; 
+	}
+
+	string toString ( ) 
+	{
+		stringstream ss; 	
 		ss << " M/D/Y " << month << " / " << day << " / " << year << " @ " << hour << ":" << minute << endl ; 
 		return ss.str() ; 
+	}
+
+	string getClockString( ) 
+	{
+		stringstream ss ; 
+		ss << hour << ":" << minute << ":" ; 
+		return ss.str() ;
+	}
+
+	int toMinutes( ) 
+	{
+		return ( hour * 60 + minute ) ; 
 	}
 
 
