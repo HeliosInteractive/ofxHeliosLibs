@@ -29,8 +29,10 @@ void MultiTouchCursor::update ( )
 
 void MultiTouchCursor::draw ( )
 {
+	float _x = position.x * ofGetWidth() ; 
+	float _y = position.y * ofGetHeight() ; 
     ofPushMatrix( ) ;
-        ofTranslate( position.x * ofGetWidth() , position.y * ofGetHeight() ) ;
+        ofTranslate( _x , _y ) ;
         ofPushStyle() ;
         ofNoFill( ) ;
         if ( bDrag )
@@ -39,9 +41,10 @@ void MultiTouchCursor::draw ( )
         ofCircle( 0 , 0, 15  ) ;
         string status = "id:" + ofToString(id) + " x:" + ofToString( (int)position.x ) + " y:" + ofToString( (int)position.y ) ;
         ofSetColor( 255 , 255 , 255 ) ;
-        ofDrawBitmapString( status , 0 , 20 ) ;
         ofPopStyle( ) ;
     ofPopMatrix( ) ;
+
+	ofDrawBitmapStringHighlight( status , position.x * ofGetWidth() , position.y * ofGetHeight() + 20 ) ;
 }
 
 void MultiTouchCursor::onDown ( ofPoint p )

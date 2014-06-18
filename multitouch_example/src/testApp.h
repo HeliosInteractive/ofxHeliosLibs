@@ -4,8 +4,9 @@
 #include "MultiTouchCursor.h"
 #include "MultiTouchObject.h"
 #include "ofBaseTouchApp.h"
-#include "Tweenzor.h"
 
+//If you don't have access to a touch screen you can debug rotation / scale with the mouse
+//#define NO_MULTITOUCH 3
 
 class testApp : public ofBaseTouchApp {
 	public:
@@ -33,5 +34,10 @@ class testApp : public ofBaseTouchApp {
 
 		// quick map to store current touches
 		map<int,ofPoint> touches;
+
+#ifdef NO_MULTITOUCH
+		MultiTouchCursor mouseDrag ;
+		MultiTouchCursor mouseDragReflect ;
+#endif 
 
 };

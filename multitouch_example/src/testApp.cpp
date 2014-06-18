@@ -3,16 +3,23 @@
 //--------------------------------------------------------------
 void testApp::setup()
 {
-	Tweenzor::init(); 
-
     multiTouchObject.setup( ofGetWidth()/2 , ofGetHeight()/2 , 400.0f , 0.9725f ) ;
     ofSetFrameRate( 60 ) ;
+
+#ifdef NO_MULTITOUCH
+	mouseDrag.setup ( 0  , 0 , 0 ) ;
+    mouseDragReflect.setup( 1 , 0 , 0 ) ;
+#endif 
 }
 
 //--------------------------------------------------------------
 void testApp::update(){
 
-	Tweenzor::update( ofGetElapsedTimeMillis() ) ;
+#ifdef NO_MULTITOUCH
+	mouseDrag.update( ) ;
+    mouseDragReflect.update( ) ;
+#endif 
+
     multiTouchObject.update( ) ;
 }
 
@@ -28,6 +35,9 @@ void testApp::draw(){
 	{
 		ofCircle(iter->second, 30);
 	}
+
+	mouseDrag.draw ( ) ;
+    mouseDragReflect.draw( ) ;
 
 }
 
@@ -65,58 +75,62 @@ void testApp::touchUp(ofTouchEventArgs &touch)
 
 //--------------------------------------------------------------
 void testApp::mouseDragged(int x, int y, int button){
-	/*
+	
+#ifdef NO_MULTITOUCH
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onDrag( ofPoint ( x/w , y/h )  ) ;
     mouseDragReflect.onDrag( ofPoint ( (ofGetWidth() - x)/w , (ofGetHeight() - y )/h));
 
     ofPoint m = ofPoint( x , y ) ;
-    ofPoint myObjP = ofPoint ( mtObject.x * w , mtObject.y * h ) ;
+    ofPoint myObjP = ofPoint ( multiTouchObject.x * w , multiTouchObject.y * h ) ;
     //OVERLY SIMPLE hit detection. We check how far our point is from the center ro see if we are hitting
     float dist = myObjP.distance( myObjP ) ;
-    if ( dist < ( mtObject.area.width / 2 ) )
+    if ( dist < ( multiTouchObject.area.width / 2 ) )
     {
-        mtObject.multiTouch.touchDrag( mouseDrag ) ;
-        mtObject.multiTouch.touchDrag( mouseDragReflect ) ;
-    }*/
+        multiTouchObject.multiTouch.touchDrag( mouseDrag ) ;
+        multiTouchObject.multiTouch.touchDrag( mouseDragReflect ) ;
+    }
+#endif
 }
 
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
 
-	/*
+#ifdef NO_MULTITOUCH
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onDown( ofPoint ( x/w , y/h )) ;
     mouseDragReflect.onDown( ofPoint ( (ofGetWidth() - x)/w , (ofGetHeight() - y )/h));
 
     ofPoint m = ofPoint( x , y ) ;
-    ofPoint myObjP = ofPoint ( mtObject.x * w , mtObject.y * h ) ;
+    ofPoint myObjP = ofPoint ( multiTouchObject.x * w , multiTouchObject.y * h ) ;
 
     //OVERLY SIMPLE hit detection. We check how far our point is from the center To see if we are hitting
     float dist = myObjP.distance( myObjP ) ;
-    if ( dist < ( mtObject.area.width / 2 ) )
+    if ( dist < ( multiTouchObject.area.width / 2 ) )
     {
         cout << "pressed within range!" << endl ;
-        mtObject.multiTouch.touchDown( mouseDrag ) ;
-        mtObject.multiTouch.touchDown( mouseDragReflect ) ;
-    }*/
+        multiTouchObject.multiTouch.touchDown( mouseDrag ) ;
+        multiTouchObject.multiTouch.touchDown( mouseDragReflect ) ;
+    }
+#endif
 }
 
 //--------------------------------------------------------------
 void testApp::mouseReleased(int x, int y, int button){
 
-	/*
+#ifdef NO_MULTITOUCH
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onUp( ofPoint ( x/w , y/h ) ) ;
     mouseDragReflect.onUp( ofPoint ( (ofGetWidth() - x)/w , (ofGetHeight() - y )/h ));
 
     //On up we always want to remove points ?
-    mtObject.multiTouch.touchRelease( mouseDrag ) ;
-    mtObject.multiTouch.touchRelease( mouseDragReflect ) ;
-	*/
+    multiTouchObject.multiTouch.touchUp( mouseDrag ) ;
+    multiTouchObject.multiTouch.touchUp( mouseDragReflect ) ;
+#endif 
+	
 }
 
 //--------------------------------------------------------------

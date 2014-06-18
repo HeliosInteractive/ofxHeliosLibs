@@ -19,12 +19,6 @@
     <ClCompile Include="..\..\..\addons\ofxHeliosLibs\src\multitouch\MultiTouchObject.cpp">
       <Filter>addons\ofxHeliosLibs\src\multitouch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\addons\ofxTweenzor\src\Tween.cpp">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\addons\ofxTweenzor\src\Tweenzor.cpp">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\addons\ofxWinTouch\src\GestureEngine.cpp">
       <Filter>addons\ofxWinTouch\src</Filter>
     </ClCompile>
@@ -60,12 +54,6 @@
     <Filter Include="addons\ofxHeliosLibs\src\multitouch">
       <UniqueIdentifier>{10E61F8E-C011-F2C5-7EF4-78D1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="addons\ofxTweenzor">
-      <UniqueIdentifier>{01C39FF4-5B53-3070-C89A-1750}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="addons\ofxTweenzor\src">
-      <UniqueIdentifier>{5D58D81D-C685-E91E-0E62-80F4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="addons\ofxWinTouch">
       <UniqueIdentifier>{45F8CA1C-3747-0512-30BC-12F1}</UniqueIdentifier>
     </Filter>
@@ -91,24 +79,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxHeliosLibs\src\multitouch\MultiTouchObject.h">
       <Filter>addons\ofxHeliosLibs\src\multitouch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\ofxTweenzor.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\Tween.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\TweenEvent.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\TweenFunctions.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\TweenSelector.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxTweenzor\src\Tweenzor.h">
-      <Filter>addons\ofxTweenzor\src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxWinTouch\src\GestureEngine.h">
       <Filter>addons\ofxWinTouch\src</Filter>
