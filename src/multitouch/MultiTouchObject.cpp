@@ -31,11 +31,11 @@ void MultiTouchObject::setup ( float _x , float _y , float _size , float _dampen
 void MultiTouchObject::update ( )
 {
     multiTouch.update( ) ;
-	x += ( multiTouch.delta.x * dampen ) ;
-    y += ( multiTouch.delta.y * dampen ) ;
-	z += ( multiTouch.delta.z * dampen ) ;
+	x += ( multiTouch.deltaX * dampen ) ;
+    y += ( multiTouch.deltaY * dampen ) ;
+	//z += ( multiTouch.delta.z * dampen ) ;
     rotation += ( multiTouch.deltaDeg  * dampen ) ;
-    scale = multiTouch.scale ;
+	scale = multiTouch.scaleX ;
 }
 
 void MultiTouchObject::draw ( )

@@ -3,8 +3,11 @@
 #include "ofMain.h"
 #include "MultiTouchCursor.h"
 #include "MultiTouchObject.h"
+#include "ofBaseTouchApp.h"
+#include "Tweenzor.h"
 
-class testApp : public ofBaseApp{
+
+class testApp : public ofBaseTouchApp {
 	public:
 		void setup();
 		void update();
@@ -20,8 +23,15 @@ class testApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
-		MultiTouchCursor mouseDrag ;
-		MultiTouchCursor mouseDragReflect ;
 
-		MultiTouchObject mtObject ;
+		MultiTouchObject multiTouchObject ;
+
+		// win7 events
+		void touchDown(ofTouchEventArgs &touch);
+		void touchMoved(ofTouchEventArgs &touch);
+		void touchUp(ofTouchEventArgs &touch);
+
+		// quick map to store current touches
+		map<int,ofPoint> touches;
+
 };

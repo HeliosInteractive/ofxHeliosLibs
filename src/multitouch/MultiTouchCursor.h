@@ -12,6 +12,12 @@ class MultiTouchCursor
 {
     public:
         MultiTouchCursor();
+		MultiTouchCursor( float _x , float _y , int _id ) 
+		{
+			position.x = _x ; 
+			position.y = _y ; 
+			id = _id ; 
+		}
         virtual ~MultiTouchCursor();
 
         ofPoint position, speed ;

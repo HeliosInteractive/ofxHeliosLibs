@@ -1,31 +1,33 @@
 #include "testApp.h"
 #include "MultiTouchActions.h"
 //--------------------------------------------------------------
-void testApp::setup(){
-    mouseDrag.setup ( 0  , 0 , 0 ) ;
-    mouseDragReflect.setup( 1 , 0 , 0 ) ;
+void testApp::setup()
+{
+	Tweenzor::init(); 
 
-    mtObject.setup( ofGetWidth()/2 , ofGetHeight()/2 , 400.0f , 0.9725f ) ;
+    multiTouchObject.setup( ofGetWidth()/2 , ofGetHeight()/2 , 400.0f , 0.9725f ) ;
     ofSetFrameRate( 60 ) ;
 }
 
 //--------------------------------------------------------------
 void testApp::update(){
-    mouseDrag.update ( ) ;
-    mouseDragReflect.update( ) ;
 
-    mtObject.update( ) ;
+	Tweenzor::update( ofGetElapsedTimeMillis() ) ;
+    multiTouchObject.update( ) ;
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
 
-    mtObject.draw( ) ;
+    multiTouchObject.draw( ) ;
 
-    mouseDrag.draw ( ) ;
-    mouseDragReflect.draw( ) ;
+	ofDrawBitmapStringHighlight(  multiTouchObject.getDebugOutput() , 15 , 15 ) ; 
 
-	ofDrawBitmapStringHighlight(  mtObject.getDebugOutput() , 15 , 15 ) ; 
+	map<int,ofPoint>::iterator iter;
+	for ( iter=touches.begin(); iter != touches.end(); ++iter )
+	{
+		ofCircle(iter->second, 30);
+	}
 
 }
 
@@ -44,9 +46,26 @@ void testApp::mouseMoved(int x, int y){
 
 }
 
+// win7 events
+void testApp::touchDown(ofTouchEventArgs &touch)
+{
+	multiTouchObject.multiTouch.touchDown( touch.x /ofGetWidth() , touch.y / ofGetHeight() , touch.id ) ;
+}
+
+void testApp::touchMoved(ofTouchEventArgs &touch ) 
+{
+	multiTouchObject.multiTouch.touchDrag( touch.x / ofGetWidth()  , touch.y / ofGetHeight() , touch.id ) ;
+}
+
+void testApp::touchUp(ofTouchEventArgs &touch)
+{
+	multiTouchObject.multiTouch.touchUp( touch.x / ofGetWidth()  , touch.y / ofGetHeight() , touch.id ) ;
+}
+
+
 //--------------------------------------------------------------
 void testApp::mouseDragged(int x, int y, int button){
-
+	/*
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onDrag( ofPoint ( x/w , y/h )  ) ;
@@ -60,12 +79,13 @@ void testApp::mouseDragged(int x, int y, int button){
     {
         mtObject.multiTouch.touchDrag( mouseDrag ) ;
         mtObject.multiTouch.touchDrag( mouseDragReflect ) ;
-    }
+    }*/
 }
 
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
 
+	/*
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onDown( ofPoint ( x/w , y/h )) ;
@@ -81,12 +101,13 @@ void testApp::mousePressed(int x, int y, int button){
         cout << "pressed within range!" << endl ;
         mtObject.multiTouch.touchDown( mouseDrag ) ;
         mtObject.multiTouch.touchDown( mouseDragReflect ) ;
-    }
+    }*/
 }
 
 //--------------------------------------------------------------
 void testApp::mouseReleased(int x, int y, int button){
 
+	/*
     float w = (float)ofGetWidth() ;
     float h = (float)ofGetHeight() ;
     mouseDrag.onUp( ofPoint ( x/w , y/h ) ) ;
@@ -95,6 +116,7 @@ void testApp::mouseReleased(int x, int y, int button){
     //On up we always want to remove points ?
     mtObject.multiTouch.touchRelease( mouseDrag ) ;
     mtObject.multiTouch.touchRelease( mouseDragReflect ) ;
+	*/
 }
 
 //--------------------------------------------------------------
